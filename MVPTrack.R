@@ -1,17 +1,37 @@
+#### MAIN DATA ####
 # GRAB DATA FROM EACH SEASON
-main_dat<-read.csv("C:/Users/Caio/repos/nba-models/season-stats/1976.csv", header = TRUE)
-main_dat$Season<-1976
-for (year in 1977:2017) {
+main_dat<-data.frame(Rk=integer(),Player=character(),Pos=character(),Age=double(),Tm=character(),
+                    G=double(),GS=double(),MP=double(),FG=double(),FGA=double(),FG.=double(),
+                    X3P=double(),X3PA=double(),X3P.=double(),X2P=double(),X2PA=double(),
+                    X2P.=double(),eFG.=double(),FT=double(),FTA=double(),FT.=double(),ORB=double(),
+                    DRB=double(),TRB=double(),AST=double(),STL=double(),BLK=double(),TOV=double(),
+                    PF=double(),PTS=double(),Season=integer())
+for (year in 1976:2017) {
+  # read data
   str<-paste("C:/Users/Caio/repos/nba-models/season-stats/",year,".csv",sep="")
   temp_dat<-read.csv(str, header = TRUE)
+  
+  # add season column
   temp_dat$Season<-year
-  names(temp_dat)<-names(main_dat)
+  
+  # clean player names
+  temp_dat$Player<-as.character(temp_dat$Player)
+  names<-strsplit(as.character(temp_dat$Player),"[\\\\]")
+  for (idx in 1:dim(temp_dat)[1]) {
+    temp_dat$Player[idx]<-names[[idx]][1]
+  }
+  
+  # might consider lockout seasons
+  
   ### NEED TO ADD CODE TO CLEAN PARTIAL SEASONS
+  
+  # add season to main dataframe
   main_dat<-data.frame(rbind(as.matrix(main_dat), as.matrix(temp_dat)))
 }
 head(main_dat)
 
 
+#### MVP DATA ####
 # GRAB MVP DATA FROM EACH SEASON
 mvp_dat<-data.frame(Rank=integer(),Player=character(),Age=double(),Tm=character(),
                     First=double(),Pts.Won=double(),Pts.Max=double(),Share=double(),
