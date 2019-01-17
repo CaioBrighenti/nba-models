@@ -15,8 +15,7 @@ for (year in YEAR_START:YEAR_END) {
   str<-paste("C:/Users/Caio/repos/nba-models/award-stats/",year,".csv",sep="")
   dat_temp<-read.csv(str, header = TRUE,stringsAsFactors=FALSE)
   dat_temp$Season<-year
-  # normalize stats & set class
-  # Model is more accurate without this
+  # normalize stats
   ## G
   dat_temp$G<-dat_temp$G/max(dat_temp$G)
   ## MP
@@ -142,9 +141,8 @@ for (idx in 1:dim(truevals)[1]) {
 
 # add first place votes
 dat_totals$First<-0
-for (idx in 1:4) {#dim(mvp_dat)[1]) {
-  temp_row<-dat_totals[which(as.character(dat_totals$Player)==as.character(mvp_dat[idx,]$Player)&dat_totals$Season==mvp_dat[idx,]$Season),]
-  temp_row$First<-mvp_dat[idx,]$First
+for (idx in 1:dim(mvp_dat)[1]) {
+  dat_totals[which(as.character(dat_totals$Player)==as.character(mvp_dat[idx,]$Player)&dat_totals$Season==mvp_dat[idx,]$Season),]$First<-mvp_dat[idx,]$First
 }
 
 #######################################################
@@ -169,7 +167,9 @@ for (year in YEAR_START:YEAR_END) {
   dat_temp$Player<-as.character(dat_temp$Player)
   names<-strsplit(as.character(dat_temp$Player),"[\\\\]")
   for (idx in 1:dim(dat_temp)[1]) {
-    dat_temp$Player[idx]<-names[[idx]][1]
+    name<-names[[idx]][1]
+    name<-gsub("[*]","",name)
+    dat_temp$Player[idx]<-name
   }
   
   # might consider lockout seasons
@@ -181,4 +181,71 @@ for (year in YEAR_START:YEAR_END) {
 }
 head(dat_pg)
 
+## add MVP winning seasons
+dat_pg$MVP<-FALSE
+for (idx in 1:dim(truevals)[1]) {
+  dat_pg[which(as.character(dat_pg$Player)==as.character(truevals[idx,]$Player)&dat_pg$Season
+               ==truevals[idx,]$Season),]$MVP<-TRUE
+}
 
+# add first place votes
+dat_pg$First<-0
+for (idx in 1:dim(mvp_dat)[1]) {
+  dat_pg[which(as.character(dat_pg$Player)==as.character(mvp_dat[idx,]$Player)&
+                 dat_pg$Season==mvp_dat[idx,]$Season),]$First<-mvp_dat[idx,]$First
+  
+}
+
+# test truevals
+dat_pg[which(dat_pg$MVP==TRUE),]
+
+# fix data.frame classes
+for (idx in c(4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30)) {
+  class(dat_pg[,idx])
+  dat_pg[,idx]<-as.numeric(type.convert(dat_pg[,idx]))
+  class(dat_pg[,idx])
+}
+
+
+# clean missing observations
+dat_pg_clean<-dat_pg[complete.cases(dat_pg), ]
+
+#subset data
+dat.mod<-dat_pg_clean[which(dat_pg_clean$G>60),]
+
+# normalize data
+for (year in levels(as.factor(dat.mod$Season))) {
+  for (idx in c(4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30)) {
+    dat.mod[,idx]<-dat.mod[,idx]/max(dat.mod[,idx])
+  }
+}
+
+# baseline model
+mod<-lm(First~Pos+Age+G+GS+MP+FG+FGA+FG.+X3P+X3PA+X3P+X2P+X2PA+X2P.+eFG.+FT+FTA+FT.+ORB+DRB+TRB+AST+STL+BLK+TOV+PF+PS.G,data=dat.mod)
+summary(mod)
+
+# reduced model
+mod.red<-lm(First~Pos+G+MP+eFG.+ORB+DRB+TRB+AST+STL+BLK+TOV+PF+PS.G,data=dat.mod)
+summary(mod.red)
+
+# make predictions
+pred<-fitted(mod.red)
+mvps<-data.frame(Rk=integer(),Player=character(),Pos=character(),Age=double(),Tm=character(),
+                  G=double(),GS=double(),MP=double(),FG=double(),FGA=double(),FG.=double(),
+                  X3P=double(),X3PA=double(),X3P.=double(),X2P=double(),X2PA=double(),
+                  X2P.=double(),eFG.=double(),FT=double(),FTA=double(),FT.=double(),ORB=double(),
+                  DRB=double(),TRB=double(),AST=double(),STL=double(),BLK=double(),TOV=double(),
+                  PF=double(),PS.G=double(),Season=integer(),MVP=logical(),First=double())
+for (year in levels(as.factor(dat.mod$Season))) {
+  dat_temp<-dat.mod[which(dat.mod$Season==year),]
+  temp_preds<-pred[which(dat.mod$Season==year)]
+  mvp<-dat_temp[which(temp_preds==max(temp_preds)),]
+  mvps<-data.frame(rbind(as.matrix(mvps), as.matrix(mvp)))
+}
+mvps
+
+# calculate accuracy
+truevals<-dat_pg_clean[which(dat_pg_clean$MVP==TRUE),]
+errs<-mvps[which(mvps$MVP==FALSE),]
+accuracy<-1-(dim(errs)[1]/dim(mvps)[1])
+accuracy
