@@ -10,12 +10,15 @@ browser = webdriver.Firefox()
 # grab season player stat per game
 scrapeBbalRef(2000, 2002, 'https://www.basketball-reference.com/leagues/NBA_*SEASON*_per_game.html','per_game_stats','season-stats-pergame')
 # grab season player stat totals
-scrapeBbalRef(2000, 2002, 'https://www.basketball-reference.com/leagues/NBA_*SEASON*_totals.html','totals_stats','season-stats-pergame-test')
+scrapeBbalRef(2000, 2002, 'https://www.basketball-reference.com/leagues/NBA_*SEASON*_totals.html','totals_stats','season-stats-totals')
 # grab MVP stats
-scrapeBbalRef(2000, 2002, 'https://www.basketball-reference.com/awards/awards_*SEASON*.html','nba_mvp','season-stats-pergame-test', False)
+scrapeBbalRef(2000, 2002, 'https://www.basketball-reference.com/awards/awards_*SEASON*.html','nba_mvp','award-stats', False)
+# grab standings stats
+scrapeBbalRef(1977, 2018, 'https://www.basketball-reference.com/leagues/NBA_*SEASON*_standings.html', 'expanded_standings','season-standings', False)
 
 def scrapeBbalRef(year_start, year_end, page_string, id, folder_name, toggle_partial = True ):
     for season in range(year_start, year_end+1):
+        #print(season)
         # navigate to bballref
         url = page_string.replace("*SEASON*", str(season))
         browser.get(url)
@@ -27,6 +30,8 @@ def scrapeBbalRef(year_start, year_end, page_string, id, folder_name, toggle_par
         # activate and grab data in CSV format
         if toggle_partial:
             browser.execute_script('document.getElementById("'+ partial_id +'").click();')
+
+        # grab raw CSV
         raw_csv = browser.execute_script('''var x = document.getElementsByClassName("tooltip");
         x[3].click();
         var content = document.getElementById("'''+ csv_id +'''")
@@ -36,10 +41,16 @@ def scrapeBbalRef(year_start, year_end, page_string, id, folder_name, toggle_par
         }
         return content.textContent
         ''')
-        # hacky cleanup for MVP data
-        if page_string == 'https://www.basketball-reference.com/awards/awards_*SEASON*.html':
-            raw_csv = raw_csv[133:]
 
+        # clean csv string
+        ## get rid of false headers
+        if page_string == 'https://www.basketball-reference.com/awards/awards_*SEASON*.html' or page_string == 'https://www.basketball-reference.com/leagues/NBA_*SEASON*_standings.html':
+            raw_csv = '\n'.join(raw_csv.split('\n')[2:])
+        ## remove special characters from standings
+        raw_csv=raw_csv.replace("\u2264","")
+        raw_csv=raw_csv.replace("\u2265","")
+
+        #print(raw_csv)
         # write to CSV
         pathstr = folder_name + "/" + str(season) + ".csv"
         f = open(pathstr, "w")

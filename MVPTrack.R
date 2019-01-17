@@ -98,6 +98,52 @@ accuracy<-1-(dim(errs)[1]/dim(mvps)[1])
 accuracy
 
 #######################################################
+################   SEASON STANDINGS    ################ 
+#######################################################
+# GRAB DATA FROM EACH SEASON
+dat_std<-data.frame(Rk=integer(),Team=character(),Overall=character(),Home=character(),Road=character(),
+                    Pre=character(),Post=character(),X3=character(),X10=character(),Oct=character(),
+                    Nov=character(),Dec=character(),Jan=character(),Feb=character(),Mar=character(),
+                    Apr=character(),Season=factor())
+for (year in YEAR_START:YEAR_END) {
+  # read data
+  str<-paste("C:/Users/Caio/repos/nba-models/season-standings/",year,".csv",sep="")
+  dat_temp<-read.csv(str, header = TRUE)
+  
+  # add season column
+  dat_temp$Season<-year
+  
+  # fix missing Oct data
+  if(!("Oct" %in% colnames(dat_temp)))
+  {
+    dat_temp$Oct<-NA
+  }
+  if(!("Nov" %in% colnames(dat_temp)))
+  {
+    dat_temp$Nov<-NA
+  }
+  
+  # fix columns
+  dat_temp<-data.frame(Rk=dat_temp$Rk,Team=dat_temp$Team,Overall=dat_temp$Overall,Home=dat_temp$Home,
+                      Road=dat_temp$Road,Pre=dat_temp$Pre,Post=dat_temp$Post,X3=dat_temp$X3,X10=dat_temp$X10,
+                      Oct=dat_temp$Oct,Nov=dat_temp$Nov,Dec=dat_temp$Dec,Jan=dat_temp$Jan,Feb=dat_temp$Feb,
+                      Mar=dat_temp$Mar,Apr=dat_temp$Apr,Season=dat_temp$Season)
+  
+  # add season to main dataframe
+  dat_std<-data.frame(rbind(as.matrix(dat_std), as.matrix(dat_temp)))
+}
+head(dat_std)
+
+# add wins and losses
+wl<-strsplit(as.character(dat_std$Overall), "-")
+dat_std$Wins<-0
+dat_std$Losses<-0
+for (idx in 1:dim(dat_std)[1]) {
+  dat_std[idx,]$Wins<-wl[[idx]][1]
+  dat_std[idx,]$Losses<-wl[[idx]][2]
+}
+
+#######################################################
 ################ SEASON PLAYER TOTALS ################
 #######################################################
 # GRAB DATA FROM EACH SEASON
@@ -125,8 +171,6 @@ for (year in YEAR_START:YEAR_END) {
   }
   
   # might consider lockout seasons
-  
-  ### NEED TO ADD CODE TO CLEAN PARTIAL SEASONS
   
   # add season to main dataframe
   dat_totals<-data.frame(rbind(as.matrix(dat_totals), as.matrix(dat_temp)))
@@ -174,8 +218,6 @@ for (year in YEAR_START:YEAR_END) {
   
   # might consider lockout seasons
   
-  ### NEED TO ADD CODE TO CLEAN PARTIAL SEASONS
-  
   # add season to main dataframe
   dat_pg<-data.frame(rbind(as.matrix(dat_pg), as.matrix(dat_temp)))
 }
@@ -212,6 +254,7 @@ dat_pg_clean<-dat_pg[complete.cases(dat_pg), ]
 
 #subset data
 dat.mod<-dat_pg_clean[which(dat_pg_clean$G>60),]
+dat.mod<-dat.mod[which(dat.mod$Tm!="TOT"),]
 
 # normalize data
 for (year in levels(as.factor(dat.mod$Season))) {
@@ -220,22 +263,51 @@ for (year in levels(as.factor(dat.mod$Season))) {
   }
 }
 
+# fix team strings
+## standings full team name, player stats abbreviated
+abbrev<-c("ATL","BOS","BRK","CHA","CHH","CHI","CHO","CLE","DAL","DEN","DET","GSW","HOU","IND","LAC","LAL",
+          "MEM","MIA","MIL","MIN","NJN","NOH","NOK","NOP","NYK","OKC","ORL","PHI","PHO","POR","SAC","SAS",
+          "SEA","TOR","UTA","VAN","WAS")
+fullnames<-c("Atlanta Hawks","Boston Celtics","Brooklyn Nets","Charlotte Bobcats",
+  "Charlotte Hornets","Chicago Bulls","Charlotte Hornets","Cleveland Cavaliers","Dallas Mavericks","Denver Nuggets",
+  "Detroit Pistons","Golden State Warriors","Houston Rockets","Indiana Pacers","Los Angeles Clippers",
+  "Los Angeles Lakers","Memphis Grizzlies","Miami Heat","Milwaukee Bucks","Minnesota Timberwolves",
+  "New Jersey Nets","New Orleans Hornets","New Orleans/Oklahoma City Hornets","New Orleans Pelicans",
+  "New York Knicks","Oklahoma City Thunder","Orlando Magic","Philadelphia 76ers","Phoenix Suns",
+  "Portland Trail Blazers","Sacramento Kings","San Antonio Spurs",
+  "Seattle SuperSonics","Toronto Raptors","Utah Jazz","Vancouver Grizzlies","Washington Wizards")
+names(fullnames)<-abbrev
+
+# add team wins
+dat.mod$Team.Wins<-0
+for (team_abbrev in levels(as.factor(dat.mod$Tm))) {
+  for (season in levels(as.factor(dat.mod$Season))) {
+    team_name<-fullnames[team_abbrev]
+    roster<-dat.mod[which(as.character(dat.mod$Tm)==team_abbrev & as.character(dat.mod$Season)==season),]
+    if (dim(roster)[1]!=0) {
+      roster$Team.Wins<-dat_std[which(as.character(dat_std$Team)==team_name & as.character(dat_std$Season)==season),]$Wins
+    }
+    dat.mod[which(as.character(dat.mod$Tm)==team_abbrev & as.character(dat.mod$Season)==season),]<-roster
+  }
+}
+dat.mod$Team.Wins<-type.convert(dat.mod$Team.Wins)
+
 # baseline model
-mod<-lm(First~Pos+Age+G+GS+MP+FG+FGA+FG.+X3P+X3PA+X3P+X2P+X2PA+X2P.+eFG.+FT+FTA+FT.+ORB+DRB+TRB+AST+STL+BLK+TOV+PF+PS.G,data=dat.mod)
+mod<-lm(First~Pos+Age+G+GS+MP+FG+FGA+FG.+X3P+X3PA+X3P+X2P+X2PA+X2P.+eFG.+FT+FTA+FT.+ORB+DRB+TRB+AST+STL+BLK+TOV+PF+PS.G+Team.Wins,data=dat.mod)
 summary(mod)
 
 # reduced model
-mod.red<-lm(First~Pos+G+MP+eFG.+ORB+DRB+TRB+AST+STL+BLK+TOV+PF+PS.G,data=dat.mod)
+mod.red<-lm(First~Pos+G+MP+eFG.+ORB+DRB+TRB+AST+STL+BLK+TOV+PF+PS.G+Team.Wins,data=dat.mod)
 summary(mod.red)
 
 # make predictions
 pred<-fitted(mod.red)
 mvps<-data.frame(Rk=integer(),Player=character(),Pos=character(),Age=double(),Tm=character(),
-                  G=double(),GS=double(),MP=double(),FG=double(),FGA=double(),FG.=double(),
-                  X3P=double(),X3PA=double(),X3P.=double(),X2P=double(),X2PA=double(),
-                  X2P.=double(),eFG.=double(),FT=double(),FTA=double(),FT.=double(),ORB=double(),
-                  DRB=double(),TRB=double(),AST=double(),STL=double(),BLK=double(),TOV=double(),
-                  PF=double(),PS.G=double(),Season=integer(),MVP=logical(),First=double())
+                 G=double(),GS=double(),MP=double(),FG=double(),FGA=double(),FG.=double(),
+                 X3P=double(),X3PA=double(),X3P.=double(),X2P=double(),X2PA=double(),
+                 X2P.=double(),eFG.=double(),FT=double(),FTA=double(),FT.=double(),ORB=double(),
+                 DRB=double(),TRB=double(),AST=double(),STL=double(),BLK=double(),TOV=double(),
+                 PF=double(),PS.G=double(),Season=integer(),MVP=logical(),First=double(),Team.Wins=integer())
 for (year in levels(as.factor(dat.mod$Season))) {
   dat_temp<-dat.mod[which(dat.mod$Season==year),]
   temp_preds<-pred[which(dat.mod$Season==year)]
