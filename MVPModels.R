@@ -4,7 +4,7 @@
 dat_std<-loadStandings(1977,2017)
 
 # LOAD MVP DATA
-dat_mvp<-loadMVP(1977,2017,dat_std)
+dat_mvp<-loadMVP(2000,2017,dat_std)
 
 # LOAD TOTAL PLAYER STATS
 dat_totals<-loadTotals(2000,2017,dat_mvp,normalize=FALSE)

@@ -58,17 +58,17 @@ loadMVP <- function(yr_start,yr_end,dat_std) {
   
   # fix team strings
   ## standings full team name, player stats abbreviated
-  abbrev<-c("ATL","BOS","BRK","CHA","CHH","CHI","CHO","CLE","DAL","DEN","DET","GSW","HOU","IND","LAC","LAL",
-            "MEM","MIA","MIL","MIN","NJN","NOH","NOK","NOP","NYK","OKC","ORL","PHI","PHO","POR","SAC","SAS",
-            "SEA","TOR","UTA","VAN","WAS")
-  fullnames<-c("Atlanta Hawks","Boston Celtics","Brooklyn Nets","Charlotte Bobcats",
+  abbrev<-c("ATL","BOS","BRK","BUF","CHA","CHH","CHI","CHO","CLE","DAL","DEN","DET","GSW","HOU","IND","LAC","LAL",
+            "MEM","MIA","MIL","MIN","NJN","NOH","NOJ","NOK","NOP","NYK","NYN","OKC","ORL","PHI","PHO","POR","SAC","SAS",
+            "SDC","SEA","TOR","UTA","VAN","WAS","WSB","KCK")
+  fullnames<-c("Atlanta Hawks","Boston Celtics","Brooklyn Nets","Buffalo Braves","Charlotte Bobcats",
                "Charlotte Hornets","Chicago Bulls","Charlotte Hornets","Cleveland Cavaliers","Dallas Mavericks","Denver Nuggets",
                "Detroit Pistons","Golden State Warriors","Houston Rockets","Indiana Pacers","Los Angeles Clippers",
                "Los Angeles Lakers","Memphis Grizzlies","Miami Heat","Milwaukee Bucks","Minnesota Timberwolves",
-               "New Jersey Nets","New Orleans Hornets","New Orleans/Oklahoma City Hornets","New Orleans Pelicans",
-               "New York Knicks","Oklahoma City Thunder","Orlando Magic","Philadelphia 76ers","Phoenix Suns",
-               "Portland Trail Blazers","Sacramento Kings","San Antonio Spurs",
-               "Seattle SuperSonics","Toronto Raptors","Utah Jazz","Vancouver Grizzlies","Washington Wizards")
+               "New Jersey Nets","New Orleans Hornets","New Orleans Jazz","New Orleans/Oklahoma City Hornets","New Orleans Pelicans",
+               "New York Knicks","New York Nets","Oklahoma City Thunder","Orlando Magic","Philadelphia 76ers","Phoenix Suns",
+               "Portland Trail Blazers","Sacramento Kings","San Antonio Spurs","San Diego Clippers","Seattle SuperSonics",
+               "Toronto Raptors","Utah Jazz","Vancouver Grizzlies","Washington Wizards","Washington Bullets","Kansas City Kings")
   names(fullnames)<-abbrev
   
   # add team wins
@@ -233,17 +233,17 @@ loadTotals <- function(yr_start,yr_end,dat_mvp,normalize) {
   
   # fix team strings
   ## standings full team name, player stats abbreviated
-  abbrev<-c("ATL","BOS","BRK","CHA","CHH","CHI","CHO","CLE","DAL","DEN","DET","GSW","HOU","IND","LAC","LAL",
-            "MEM","MIA","MIL","MIN","NJN","NOH","NOK","NOP","NYK","OKC","ORL","PHI","PHO","POR","SAC","SAS",
-            "SEA","TOR","UTA","VAN","WAS")
-  fullnames<-c("Atlanta Hawks","Boston Celtics","Brooklyn Nets","Charlotte Bobcats",
+  abbrev<-c("ATL","BOS","BRK","BUF","CHA","CHH","CHI","CHO","CLE","DAL","DEN","DET","GSW","HOU","IND","LAC","LAL",
+            "MEM","MIA","MIL","MIN","NJN","NOH","NOJ","NOK","NOP","NYK","NYN","OKC","ORL","PHI","PHO","POR","SAC","SAS",
+            "SDC","SEA","TOR","UTA","VAN","WAS","WSB","KCK")
+  fullnames<-c("Atlanta Hawks","Boston Celtics","Brooklyn Nets","Buffalo Braves","Charlotte Bobcats",
                "Charlotte Hornets","Chicago Bulls","Charlotte Hornets","Cleveland Cavaliers","Dallas Mavericks","Denver Nuggets",
                "Detroit Pistons","Golden State Warriors","Houston Rockets","Indiana Pacers","Los Angeles Clippers",
                "Los Angeles Lakers","Memphis Grizzlies","Miami Heat","Milwaukee Bucks","Minnesota Timberwolves",
-               "New Jersey Nets","New Orleans Hornets","New Orleans/Oklahoma City Hornets","New Orleans Pelicans",
-               "New York Knicks","Oklahoma City Thunder","Orlando Magic","Philadelphia 76ers","Phoenix Suns",
-               "Portland Trail Blazers","Sacramento Kings","San Antonio Spurs",
-               "Seattle SuperSonics","Toronto Raptors","Utah Jazz","Vancouver Grizzlies","Washington Wizards")
+               "New Jersey Nets","New Orleans Hornets","New Orleans Jazz","New Orleans/Oklahoma City Hornets","New Orleans Pelicans",
+               "New York Knicks","New York Nets","Oklahoma City Thunder","Orlando Magic","Philadelphia 76ers","Phoenix Suns",
+               "Portland Trail Blazers","Sacramento Kings","San Antonio Spurs","San Diego Clippers","Seattle SuperSonics",
+               "Toronto Raptors","Utah Jazz","Vancouver Grizzlies","Washington Wizards","Washington Bullets","Kansas City Kings")
   names(fullnames)<-abbrev
   
   # add team wins
@@ -263,6 +263,7 @@ loadTotals <- function(yr_start,yr_end,dat_mvp,normalize) {
   
   return(dat_totals)
 }
+
 #######################################################
 ################ NOT YET IMPLEMENTED  ################ 
 ################ SEASON PLAYER PER GAME################ 
