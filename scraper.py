@@ -10,7 +10,7 @@ browser = webdriver.Firefox()
 # grab season player stat per game
 scrapeBbalRef(2000, 2002, 'https://www.basketball-reference.com/leagues/NBA_*SEASON*_per_game.html','per_game_stats','season-stats-pergame')
 # grab season player stat totals
-scrapeBbalRef(2000, 2002, 'https://www.basketball-reference.com/leagues/NBA_*SEASON*_totals.html','totals_stats','season-stats-totals')
+scrapeBbalRef(2018, 2018, 'https://www.basketball-reference.com/leagues/NBA_*SEASON*_totals.html','totals_stats','season-stats-totals')
 # grab MVP stats
 scrapeBbalRef(2000, 2002, 'https://www.basketball-reference.com/awards/awards_*SEASON*.html','nba_mvp','award-stats', False)
 # grab standings stats

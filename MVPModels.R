@@ -15,7 +15,7 @@ dat_totals<-loadTotals(2000,2017,dat_mvp,normalize=FALSE)
 
 # models
 ## MVP data only
-mod.mvp<-lm(First~Age+G+MP+PTS+TRB+AST+STL+BLK+FG.+X3P.+FT.+Team.Wins,data=dat_mvp)
+mod.mvp<-lm(Pts.Won~Age+G+MP+PTS+TRB+AST+STL+BLK+FG.+X3P.+FT.+Team.Wins,data=dat_mvp)
 summary(mod.mvp)
 mod.mvp.red<-lm(First~G+PTS+TRB+AST+Team.Wins,data=dat_mvp)
 summary(mod.mvp.red)
@@ -48,6 +48,9 @@ acc.totals<-calcAccuracy(MVPs.totals,FALSE)
 ## minimum advanced stats (PER)
 ## post all-star game numbers
 
+# make prediction
+# load 2018 data
+#dat_2018<-loadTotals(2018,2018,dat_mvp,normalize=FALSE)
 
 #######################################################
 ################# HELPER FUNCTIONS #################### 
@@ -74,6 +77,6 @@ calcAccuracy <- function(mvps,ranks) {
   } else {
     errs<-mvps[which(mvps$MVP==FALSE),]
   }
-  #print(errs)
+  print(errs)
   return(1-(dim(errs)[1]/dim(mvps)[1]))
 }
