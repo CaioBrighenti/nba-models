@@ -1,4 +1,4 @@
-#source("C:/Users/Caio/repos/nba-models/loadData.R")
+source("C:/Users/Caio/repos/nba-models/loadData.R")
 
 # LOAD STANDINGS DATA
 dat_std<-loadStandings(1977,2017)
@@ -7,15 +7,15 @@ dat_std<-loadStandings(1977,2017)
 dat_mvp<-loadMVP(2000,2017,dat_std)
 
 # LOAD TOTAL PLAYER STATS
-dat_totals<-loadTotals(2000,2017,dat_mvp,normalize=FALSE)
+dat_totals<-loadTotals(2000,2017,dat_mvp,normalize=TRUE)
 
 # LOAD PERGAME PLAYER STATS
-#dat_pergame<-loadPerGame(2000,2017)
+dat_pergame<-loadPerGame(2000,2017,dat_mvp,normalize=TRUE)
 
 
 # models
 ## MVP data only
-mod.mvp<-lm(Pts.Won~Age+G+MP+PTS+TRB+AST+STL+BLK+FG.+X3P.+FT.+Team.Wins,data=dat_mvp)
+mod.mvp<-lm(First~Age+G+MP+PTS+TRB+AST+STL+BLK+FG.+X3P.+FT.+Team.Wins,data=dat_mvp)
 summary(mod.mvp)
 mod.mvp.red<-lm(First~G+PTS+TRB+AST+Team.Wins,data=dat_mvp)
 summary(mod.mvp.red)
@@ -23,6 +23,10 @@ summary(mod.mvp.red)
 ## total data
 mod.totals<-lm(First~Age+G+GS+MP+FG+FG.+X3P+X3P.+X2P.+FT.+ORB+DRB+AST+STL+BLK+TOV+PF+PTS+Team.Wins,data=dat_totals)
 summary(mod.totals)
+
+# pergame data
+mod.pergame<-lm(First~Age+G+GS+MP+FG+FG.+X3P+X3P.+X2P.+FT.+ORB+DRB+AST+STL+BLK+TOV+PF+PTS+Team.Wins,data=dat_pergame)
+summary(mod.pergame)
 
 # actual winners for comparison
 truevals<-dat_mvp[which(dat_mvp$Rank==1),]
@@ -38,6 +42,36 @@ acc.mvp.red<-calcAccuracy(MVPs.mvp.red,TRUE)
 ## total stats data
 MVPs.totals<-predMVPs(dat_totals,mod.totals)
 acc.totals<-calcAccuracy(MVPs.totals,FALSE)
+## pergame stats data
+MVPs.pergame<-predMVPs(dat_pergame,mod.pergame)
+acc.pergame<-calcAccuracy(MVPs.pergame,FALSE)
+
+# try logit model
+## MVP data
+mod_logit<-glm(MVP~Age+G+MP+PTS+TRB+AST+STL+BLK+FG.+X3P.+FT.+Team.Wins,data=dat_mvp,family = binomial(link = "logit"))
+summary(mod_logit)
+
+# McFadden's R^2
+install.packages("pscl")
+library(pscl)
+pR2(mod_logit)
+
+## MVP logit model
+MVPs.logit<-predMVPs(dat_mvp,mod_logit)
+acc.logit<-calcAccuracy(MVPs.logit,FALSE)
+
+## total data
+mod.logit.total<-glm(MVP~G+MP+X3P+DRB+AST+BLK+TOV+PF+PTS+Team.Wins,data=dat_totals,family = binomial(link = "logit"))
+summary(mod.logit.total)
+
+# McFadden's R^2
+library(pscl)
+pR2(mod.logit.total)
+
+## MVP logit model
+MVPs.logit.total<-predMVPs(dat_totals,mod.logit.total)
+acc.logit.total<-calcAccuracy(MVPs.logit.total,FALSE)
+
 
 # mod refining ideas
 ## lockout seasons
@@ -77,6 +111,6 @@ calcAccuracy <- function(mvps,ranks) {
   } else {
     errs<-mvps[which(mvps$MVP==FALSE),]
   }
-  print(errs)
+  #print(errs)
   return(1-(dim(errs)[1]/dim(mvps)[1]))
 }

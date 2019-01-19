@@ -85,6 +85,9 @@ loadMVP <- function(yr_start,yr_end,dat_std) {
   }
   mvp_dat$Team.Wins<-type.convert(mvp_dat$Team.Wins)
   
+  # add whether won MVP
+  mvp_dat$MVP<-mvp_dat$Rank==1
+  
   return(mvp_dat)
 }
 
@@ -265,101 +268,104 @@ loadTotals <- function(yr_start,yr_end,dat_mvp,normalize) {
 }
 
 #######################################################
-################ NOT YET IMPLEMENTED  ################ 
+############## SHOULD MERGE WITH TOTALS ###############
 ################ SEASON PLAYER PER GAME################ 
 #######################################################
-# GRAB DATA FROM EACH SEASON
-dat_pg<-data.frame(Rk=integer(),Player=character(),Pos=character(),Age=double(),Tm=character(),
-                     G=double(),GS=double(),MP=double(),FG=double(),FGA=double(),FG.=double(),
-                     X3P=double(),X3PA=double(),X3P.=double(),X2P=double(),X2PA=double(),
-                     X2P.=double(),eFG.=double(),FT=double(),FTA=double(),FT.=double(),ORB=double(),
-                     DRB=double(),TRB=double(),AST=double(),STL=double(),BLK=double(),TOV=double(),
-                     PF=double(),PS.G=double(),Season=integer())
-for (year in YEAR_START:YEAR_END) {
-  # read data
-  str<-paste("C:/Users/Caio/repos/nba-models/season-stats-pergame/",year,".csv",sep="")
-  dat_temp<-read.csv(str, header = TRUE)
-  
-  # add season column
-  dat_temp$Season<-year
-  
-  # clean player names
-  dat_temp$Player<-as.character(dat_temp$Player)
-  names<-strsplit(as.character(dat_temp$Player),"[\\\\]")
-  for (idx in 1:dim(dat_temp)[1]) {
-    name<-names[[idx]][1]
-    name<-gsub("[*]","",name)
-    dat_temp$Player[idx]<-name
-  }
-  
-  # add season to main dataframe
-  dat_pg<-data.frame(rbind(as.matrix(dat_pg), as.matrix(dat_temp)))
-}
-head(dat_pg)
-
-## add MVP winning seasons
-dat_pg$MVP<-FALSE
-for (idx in 1:dim(truevals)[1]) {
-  dat_pg[which(as.character(dat_pg$Player)==as.character(truevals[idx,]$Player)&dat_pg$Season
-               ==truevals[idx,]$Season),]$MVP<-TRUE
-}
-
-# add first place votes
-dat_pg$First<-0
-for (idx in 1:dim(mvp_dat)[1]) {
-  dat_pg[which(as.character(dat_pg$Player)==as.character(mvp_dat[idx,]$Player)&
-                 dat_pg$Season==mvp_dat[idx,]$Season),]$First<-mvp_dat[idx,]$First
-  
-}
-
-# fix data.frame classes
-for (idx in c(4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30)) {
-  class(dat_pg[,idx])
-  dat_pg[,idx]<-as.numeric(type.convert(dat_pg[,idx]))
-  class(dat_pg[,idx])
-}
-
-
-# clean missing observations
-dat_pg_clean<-dat_pg[complete.cases(dat_pg), ]
-
-#subset data
-#dat.mod<-dat_pg_clean[which(dat_pg_clean$G>60),]
-#dat.mod<-dat.mod[which(dat.mod$Tm!="TOT"),]
-
-# normalize data
-for (year in levels(as.factor(dat.mod$Season))) {
-  for (idx in c(4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30)) {
-    dat.mod[,idx]<-dat.mod[,idx]/max(dat.mod[,idx])
-  }
-}
-
-# fix team strings
-## standings full team name, player stats abbreviated
-abbrev<-c("ATL","BOS","BRK","CHA","CHH","CHI","CHO","CLE","DAL","DEN","DET","GSW","HOU","IND","LAC","LAL",
-          "MEM","MIA","MIL","MIN","NJN","NOH","NOK","NOP","NYK","OKC","ORL","PHI","PHO","POR","SAC","SAS",
-          "SEA","TOR","UTA","VAN","WAS")
-fullnames<-c("Atlanta Hawks","Boston Celtics","Brooklyn Nets","Charlotte Bobcats",
-  "Charlotte Hornets","Chicago Bulls","Charlotte Hornets","Cleveland Cavaliers","Dallas Mavericks","Denver Nuggets",
-  "Detroit Pistons","Golden State Warriors","Houston Rockets","Indiana Pacers","Los Angeles Clippers",
-  "Los Angeles Lakers","Memphis Grizzlies","Miami Heat","Milwaukee Bucks","Minnesota Timberwolves",
-  "New Jersey Nets","New Orleans Hornets","New Orleans/Oklahoma City Hornets","New Orleans Pelicans",
-  "New York Knicks","Oklahoma City Thunder","Orlando Magic","Philadelphia 76ers","Phoenix Suns",
-  "Portland Trail Blazers","Sacramento Kings","San Antonio Spurs",
-  "Seattle SuperSonics","Toronto Raptors","Utah Jazz","Vancouver Grizzlies","Washington Wizards")
-names(fullnames)<-abbrev
-
-# add team wins
-dat.mod$Team.Wins<-0
-for (team_abbrev in levels(as.factor(dat.mod$Tm))) {
-  for (season in levels(as.factor(dat.mod$Season))) {
-    team_name<-fullnames[team_abbrev]
-    roster<-dat.mod[which(as.character(dat.mod$Tm)==team_abbrev & as.character(dat.mod$Season)==season),]
-    if (dim(roster)[1]!=0) {
-      roster$Team.Wins<-dat_std[which(as.character(dat_std$Team)==team_name & as.character(dat_std$Season)==season),]$Wins
+loadPerGame <- function(yr_start,yr_end,dat_mvp,normalize) {
+  # GRAB DATA FROM EACH SEASON
+  dat_pg<-data.frame(Rk=integer(),Player=character(),Pos=character(),Age=double(),Tm=character(),
+                         G=double(),GS=double(),MP=double(),FG=double(),FGA=double(),FG.=double(),
+                         X3P=double(),X3PA=double(),X3P.=double(),X2P=double(),X2PA=double(),
+                         X2P.=double(),eFG.=double(),FT=double(),FTA=double(),FT.=double(),ORB=double(),
+                         DRB=double(),TRB=double(),AST=double(),STL=double(),BLK=double(),TOV=double(),
+                         PF=double(),PTS=double(),Season=integer())
+  for (year in yr_start:yr_end) {
+    # read data
+    str<-paste("C:/Users/Caio/repos/nba-models/season-stats-pergame/",year,".csv",sep="")
+    dat_temp<-read.csv(str, header = TRUE)
+    
+    # add season column
+    dat_temp$Season<-year
+    
+    # clean player names
+    dat_temp$Player<-as.character(dat_temp$Player)
+    names<-strsplit(as.character(dat_temp$Player),"[\\\\]")
+    for (idx in 1:dim(dat_temp)[1]) {
+      name<-names[[idx]][1]
+      name<-gsub("[*]","",name)
+      dat_temp$Player[idx]<-name
     }
-    dat.mod[which(as.character(dat.mod$Tm)==team_abbrev & as.character(dat.mod$Season)==season),]<-roster
+    
+    # add season to main dataframe
+    dat_pg<-data.frame(rbind(as.matrix(dat_pg), as.matrix(dat_temp)))
   }
+  head(dat_pg)
+  
+  ## add MVP winning seasons
+  truevals<-dat_mvp[which(dat_mvp$Rank==1),]
+  dat_pg$MVP<-FALSE
+  for (idx in 1:dim(truevals)[1]) {
+    dat_pg[which(as.character(dat_pg$Player)==as.character(truevals[idx,]$Player)&dat_pg$Season==truevals[idx,]$Season),]$MVP<-TRUE
+  }
+  
+  # add first place votes
+  dat_pg$First<-0
+  for (idx in 1:dim(dat_mvp)[1]) {
+    dat_pg[which(as.character(dat_pg$Player)==as.character(dat_mvp[idx,]$Player)&dat_pg$Season==dat_mvp[idx,]$Season),]$First<-dat_mvp[idx,]$First
+  }
+  
+  # fix data.frame classes
+  for (idx in c(4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,33)) {
+    class(dat_pg[,idx])
+    dat_pg[,idx]<-as.numeric(type.convert(dat_pg[,idx]))
+    class(dat_pg[,idx])
+  }
+  
+  # remove TOT seasons & missing observations
+  ## needs a better fix eventually
+  dat_pg<-dat_pg[which(dat_pg$Tm!="TOT"),]
+  dat_pg<-dat_pg[complete.cases(dat_pg), ]
+  
+  # normalize data
+  if (normalize==TRUE){
+    for (year in levels(as.factor(dat_pg$Season))) {
+      for (idx in c(4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30)) {
+        dat_pg[,idx]<-dat_pg[,idx]/max(dat_pg[,idx])
+      }
+    }
+  }
+  
+  # fix team strings
+  ## standings full team name, player stats abbreviated
+  abbrev<-c("ATL","BOS","BRK","BUF","CHA","CHH","CHI","CHO","CLE","DAL","DEN","DET","GSW","HOU","IND","LAC","LAL",
+            "MEM","MIA","MIL","MIN","NJN","NOH","NOJ","NOK","NOP","NYK","NYN","OKC","ORL","PHI","PHO","POR","SAC","SAS",
+            "SDC","SEA","TOR","UTA","VAN","WAS","WSB","KCK")
+  fullnames<-c("Atlanta Hawks","Boston Celtics","Brooklyn Nets","Buffalo Braves","Charlotte Bobcats",
+               "Charlotte Hornets","Chicago Bulls","Charlotte Hornets","Cleveland Cavaliers","Dallas Mavericks","Denver Nuggets",
+               "Detroit Pistons","Golden State Warriors","Houston Rockets","Indiana Pacers","Los Angeles Clippers",
+               "Los Angeles Lakers","Memphis Grizzlies","Miami Heat","Milwaukee Bucks","Minnesota Timberwolves",
+               "New Jersey Nets","New Orleans Hornets","New Orleans Jazz","New Orleans/Oklahoma City Hornets","New Orleans Pelicans",
+               "New York Knicks","New York Nets","Oklahoma City Thunder","Orlando Magic","Philadelphia 76ers","Phoenix Suns",
+               "Portland Trail Blazers","Sacramento Kings","San Antonio Spurs","San Diego Clippers","Seattle SuperSonics",
+               "Toronto Raptors","Utah Jazz","Vancouver Grizzlies","Washington Wizards","Washington Bullets","Kansas City Kings")
+  names(fullnames)<-abbrev
+  
+  # add team wins
+  dat_pg$Team.Wins<-0
+  for (team_abbrev in levels(as.factor(dat_pg$Tm))) {
+    for (season in levels(as.factor(dat_pg$Season))) {
+      team_name<-fullnames[team_abbrev]
+      roster<-dat_pg[which(as.character(dat_pg$Tm)==team_abbrev & as.character(dat_pg$Season)==season),]
+      if (dim(roster)[1]!=0) {
+        roster$Team.Wins<-dat_std[which(as.character(dat_std$Team)==team_name & as.character(dat_std$Season)==season),]$Wins
+      }
+      dat_pg[which(as.character(dat_pg$Tm)==team_abbrev & as.character(dat_pg$Season)==season),]<-roster
+    }
+  }
+  dat_pg$Team.Wins<-type.convert(dat_pg$Team.Wins)
+  
+  
+  return(dat_pg)
 }
-dat.mod$Team.Wins<-type.convert(dat.mod$Team.Wins)
+
 
