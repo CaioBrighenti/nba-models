@@ -213,6 +213,12 @@ loadTotals <- function(yr_start,yr_end,dat_mvp,normalize) {
     dat_totals[which(as.character(dat_totals$Player)==as.character(dat_mvp[idx,]$Player)&dat_totals$Season==dat_mvp[idx,]$Season),]$First<-dat_mvp[idx,]$First
   }
   
+  # add point share
+  dat_totals$Share<-0
+  for (idx in 1:dim(dat_mvp)[1]) {
+    dat_totals[which(as.character(dat_totals$Player)==as.character(dat_mvp[idx,]$Player)&dat_totals$Season==dat_mvp[idx,]$Season),]$Share<-dat_mvp[idx,]$Share
+  }
+  
   # fix data.frame classes
   for (idx in c(4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,33)) {
     class(dat_totals[,idx])
@@ -230,6 +236,7 @@ loadTotals <- function(yr_start,yr_end,dat_mvp,normalize) {
     for (year in levels(as.factor(dat_totals$Season))) {
       for (idx in c(4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30)) {
         dat_totals[,idx]<-dat_totals[,idx]/max(dat_totals[,idx])
+        dat_totals[,idx]<-round(dat_totals[,idx], digits = 3)
       }
     }
   }
