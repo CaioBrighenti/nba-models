@@ -1,7 +1,7 @@
 source("C:/Users/Caio Laptop/Documents/Repositories/nba-models/loadData.R")
 
 # LOAD STANDINGS DATA
-dat_std<-loadStandings(2017,2018)
+dat_std<-loadStandings(2000,2017)
 
 # LOAD MVP DATA
 dat_mvp<-loadMVP(2000,2017,dat_std)
@@ -102,7 +102,10 @@ dat_2018<-loadCurrent(normalize = TRUE)
 pred<-predict(mod.shortlist.lm,dat_2018)
 
 # predict winner
-dat_2018[which(pred==max(pred)),]
+dat_2018_pred<-dat_2018
+dat_2018_pred$Pred<-pred
+dat_2018_pred<-dat_2018_pred[order(-dat_2018_pred$Pred),] 
+
 
 # mod refining ideas
 ## lockout seasons
