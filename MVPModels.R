@@ -1,7 +1,7 @@
-#source("C:/Users/Caio/repos/nba-models/loadData.R")
+source("C:/Users/Caio Laptop/Documents/Repositories/nba-models/loadData.R")
 
 # LOAD STANDINGS DATA
-dat_std<-loadStandings(1977,2017)
+dat_std<-loadStandings(2017,2018)
 
 # LOAD MVP DATA
 dat_mvp<-loadMVP(2000,2017,dat_std)
@@ -93,6 +93,16 @@ summary(mod.shortlist.lm)
 ## total stats data
 MVPs.shortlist.lm<-predMVPs(shortlist,mod.shortlist.lm)
 acc.shortlist.lm<-calcAccuracy(MVPs.shortlist.lm,FALSE)
+
+#######################################################
+#################  PREDICT FOR 2018  ##################
+#######################################################
+# LOAD 2018 STATS
+dat_2018<-loadCurrent(normalize = TRUE)
+pred<-predict(mod.shortlist.lm,dat_2018)
+
+# predict winner
+dat_2018[which(pred==max(pred)),]
 
 # mod refining ideas
 ## lockout seasons

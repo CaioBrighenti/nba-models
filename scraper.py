@@ -14,7 +14,7 @@ scrapeBbalRef(2018, 2018, 'https://www.basketball-reference.com/leagues/NBA_*SEA
 # grab MVP stats
 scrapeBbalRef(2000, 2002, 'https://www.basketball-reference.com/awards/awards_*SEASON*.html','nba_mvp','award-stats', False)
 # grab standings stats
-scrapeBbalRef(1977, 2018, 'https://www.basketball-reference.com/leagues/NBA_*SEASON*_standings.html', 'expanded_standings','season-standings', False)
+scrapeBbalRef(2018, 2018, 'https://www.basketball-reference.com/leagues/NBA_*SEASON*_standings.html', 'expanded_standings','season-standings', False)
 
 def scrapeBbalRef(year_start, year_end, page_string, id, folder_name, toggle_partial = True ):
     for season in range(year_start, year_end+1):
