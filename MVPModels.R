@@ -1,7 +1,7 @@
 source("C:/Users/Caio Laptop/Documents/Repositories/nba-models/loadData.R")
 
 # LOAD STANDINGS DATA
-dat_std<-loadStandings(2000,2017)
+dat_std<-loadStandings(2000,2018)
 
 # LOAD MVP DATA
 dat_mvp<-loadMVP(2000,2017,dat_std)
@@ -99,12 +99,24 @@ acc.shortlist.lm<-calcAccuracy(MVPs.shortlist.lm,FALSE)
 #######################################################
 # LOAD 2018 STATS
 dat_2018<-loadCurrent(normalize = TRUE)
-pred<-predict(mod.shortlist.lm,dat_2018)
 
-# predict winner
+# predict shortlist
+shortlist.pred<-predict(mod.shortlist,dat_2018)
+shortlist_2018<-dat_2018[which(shortlist.pred>0.0),]
+
+
+# predict winner - no shortlist
+pred<-predict(mod.shortlist.lm,dat_2018)
 dat_2018_pred<-dat_2018
 dat_2018_pred$Pred<-pred
 dat_2018_pred<-dat_2018_pred[order(-dat_2018_pred$Pred),] 
+
+# predict winner - with 
+## same result
+pred<-predict(mod.shortlist.lm,shortlist_2018)
+shortlist_2018_pred<-shortlist_2018
+shortlist_2018_pred$Pred<-pred
+shortlist_2018_pred<-shortlist_2018_pred[order(-shortlist_2018_pred$Pred),] 
 
 
 # mod refining ideas
