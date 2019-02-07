@@ -118,6 +118,10 @@ shortlist_2018_pred<-shortlist_2018
 shortlist_2018_pred$Pred<-pred
 shortlist_2018_pred<-shortlist_2018_pred[order(-shortlist_2018_pred$Pred),] 
 
+## write predictions to csv
+pred_dat<-data.frame(Player=shortlist_2018_pred$Player,Pred=shortlist_2018_pred$Pred)
+write.csv(pred_dat, file = "C:/Users/Caio Laptop/Documents/Repositories/nba-models/html/2018Pred.csv",row.names=FALSE)
+
 
 # mod refining ideas
 ## lockout seasons
@@ -127,10 +131,6 @@ shortlist_2018_pred<-shortlist_2018_pred[order(-shortlist_2018_pred$Pred),]
 ## add advanced stats
 ## minimum advanced stats (PER)
 ## post all-star game numbers
-
-# make prediction
-# load 2018 data
-#dat_2018<-loadTotals(2018,2018,dat_mvp,normalize=FALSE)
 
 #######################################################
 ################# HELPER FUNCTIONS #################### 
