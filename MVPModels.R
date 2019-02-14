@@ -99,10 +99,12 @@ acc.shortlist.lm<-calcAccuracy(MVPs.shortlist.lm,FALSE)
 #######################################################
 # LOAD 2018 STATS
 dat_2018<-loadCurrent(normalize = TRUE)
+#dat_2018<-dat_totals[which(dat_totals$Season==2011),]
 
 # predict shortlist
 shortlist.pred<-predict(mod.shortlist,dat_2018)
-shortlist_2018<-dat_2018[which(shortlist.pred>0.0),]
+shortlist_2018<-dat_2018[order(-shortlist.pred),]
+shortlist_2018<-shortlist_2018[1:10,]
 
 
 # predict winner - no shortlist
@@ -111,15 +113,19 @@ dat_2018_pred<-dat_2018
 dat_2018_pred$Pred<-pred
 dat_2018_pred<-dat_2018_pred[order(-dat_2018_pred$Pred),] 
 
-# predict winner - with 
+# predict winner - with shortlist
 ## same result
 pred<-predict(mod.shortlist.lm,shortlist_2018)
 shortlist_2018_pred<-shortlist_2018
 shortlist_2018_pred$Pred<-pred
 shortlist_2018_pred<-shortlist_2018_pred[order(-shortlist_2018_pred$Pred),] 
 
+# turn shortlist predictions into percentages
+shortlist_2018_pred$Pct<-shortlist_2018_pred$Pred-min(shortlist_2018_pred$Pred)
+shortlist_2018_pred$Pct<-(shortlist_2018_pred$Pct/sum(shortlist_2018_pred$Pct))*100
+
 ## write predictions to csv
-pred_dat<-data.frame(Player=shortlist_2018_pred$Player,Pred=shortlist_2018_pred$Pred)
+pred_dat<-data.frame(Player=shortlist_2018_pred$Player,Pct=shortlist_2018_pred$Pct)
 write.csv(pred_dat, file = "C:/Users/Caio Laptop/Documents/Repositories/nba-models/html/2018Pred.csv",row.names=FALSE)
 
 

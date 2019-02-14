@@ -27,8 +27,35 @@ body{
   width: 85%;
   height: 500px;
   padding: 50px;
+  padding-top: 20px;
 }
 
-.pure_table{
+table {  
+  margin-top: 2rem;
+  color: #333; /* Lighten up font color */
+  font-family: Open Sans, sans-serif;
+  font-size: 17px;
+  width: 50%; 
+  border-collapse: collapse;
+  border-style: hidden;
+}
+
+td, th { 
+  border: 3px solid #CCC; 
+  height: 35px;; 
+}
+
+th {  
+/*    background: #F3F3F3; */
+  font-family: Major Mono Display;
+  font-size: 20px;
+  color: white;
+  font-weight: bold;
+}
+
+td {  
+/*  background: #FAFAFA;*/
+  text-align: left; /* Center our text */
   padding: 10px;
+  color: white;
 }
