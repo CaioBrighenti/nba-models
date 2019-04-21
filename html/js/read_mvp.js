@@ -1,4 +1,4 @@
-d3.csv("2018Pred.csv").then(function(data) {
+d3.csv("2019Pred.csv").then(function(data) {
   for (i=0; i< data.length; i++){
     create_table(data[i].Player,data[i].Pct);
   }

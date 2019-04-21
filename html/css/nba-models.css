@@ -42,13 +42,13 @@ table {
 
 td, th { 
   border: 3px solid #CCC; 
-  height: 35px;; 
+  height: 35px;
 }
 
 th {  
 /*    background: #F3F3F3; */
   font-family: Major Mono Display;
-  font-size: 20px;
+  font-size: 25px;
   color: white;
   font-weight: bold;
 }
@@ -56,6 +56,7 @@ th {
 td {  
 /*  background: #FAFAFA;*/
   text-align: left; /* Center our text */
+    margin-left: 10px;
   padding: 10px;
   color: white;
 }

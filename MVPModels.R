@@ -1,13 +1,13 @@
 source("./repositories/nba-models/loadData.R")
 
 # LOAD STANDINGS DATA
-dat_std<-loadStandings(2000,2018)
+dat_std<-loadStandings(2000,2019)
 
 # LOAD MVP DATA
 dat_mvp<-loadMVP(2000,2017,dat_std)
 
 # LOAD TOTAL PLAYER STATS
-dat_totals<-loadTotals(2000,2017,dat_mvp,normalize=TRUE)
+dat_totals<-loadTotals(2000,2018,dat_mvp,normalize=TRUE)
 
 # LOAD PERGAME PLAYER STATS
 dat_pergame<-loadPerGame(2000,2017,dat_mvp,normalize=TRUE)
