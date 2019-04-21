@@ -12,7 +12,7 @@ loadMVP <- function(yr_start,yr_end,dat_std) {
                       STL=double(),BLK=double(),FG.=double(),X3P.=double(),FT.=double(),
                       WS=double(),WS.48=double(),Season=double())
   for (year in yr_start:yr_end) {
-    str<-paste("C:/Users/Caio Laptop/Documents/Repositories/nba-models/award-stats/",year,".csv",sep="")
+    str<-paste("./repositories/nba-models/award-stats/",year,".csv",sep="")
     dat_temp<-read.csv(str, header = TRUE,stringsAsFactors=FALSE)
     dat_temp$Season<-year
     # normalize stats
@@ -103,7 +103,7 @@ loadStandings <- function(yr_start,yr_end) {
                       Apr=character(),May=character(),Season=factor())
   for (year in yr_start:yr_end) {
     # read data
-    str<-paste("C:/Users/Caio Laptop/Documents/Repositories/nba-models/season-standings/",year,".csv",sep="")
+    str<-paste("./Repositories/nba-models/season-standings/",year,".csv",sep="")
     dat_temp<-read.csv(str, header = TRUE)
     
     # add season column
@@ -180,7 +180,7 @@ loadTotals <- function(yr_start,yr_end,dat_mvp,normalize) {
                       PF=double(),PTS=double(),Season=integer())
   for (year in yr_start:yr_end) {
     # read data
-    str<-paste("C:/Users/Caio Laptop/Documents/Repositories/nba-models/season-stats-totals/",year,".csv",sep="")
+    str<-paste("./Repositories/nba-models/season-stats-totals/",year,".csv",sep="")
     dat_temp<-read.csv(str, header = TRUE)
     
     # add season column
@@ -288,7 +288,7 @@ loadPerGame <- function(yr_start,yr_end,dat_mvp,normalize) {
                          PF=double(),PTS=double(),Season=integer())
   for (year in yr_start:yr_end) {
     # read data
-    str<-paste("C:/Users/Caio Laptop/Documents/Repositories/nba-models/season-stats-pergame/",year,".csv",sep="")
+    str<-paste("./Repositories/nba-models/season-stats-pergame/",year,".csv",sep="")
     dat_temp<-read.csv(str, header = TRUE)
     
     # add season column
@@ -380,7 +380,7 @@ loadPerGame <- function(yr_start,yr_end,dat_mvp,normalize) {
 #######################################################
 loadCurrent <- function(normalize) {
   # read data
-  str<-paste("C:/Users/Caio Laptop/Documents/Repositories/nba-models/season-stats-totals/",2018,".csv",sep="")
+  str<-paste("./Repositories/nba-models/season-stats-totals/",2018,".csv",sep="")
   dat_2018<-read.csv(str, header = TRUE)
   
   # add season column

@@ -1,4 +1,4 @@
-source("C:/Users/Caio Laptop/Documents/Repositories/nba-models/loadData.R")
+source("./repositories/nba-models/loadData.R")
 
 # LOAD STANDINGS DATA
 dat_std<-loadStandings(2000,2018)
@@ -72,7 +72,7 @@ library(pscl)
 pR2(mod.shortlist)
 
 # grab shortlist
-shortlist<-dat_totals[which(fitted(mod.shortlist)>0.5),]
+shortlist<-dat_totals[which(predict(mod.shortlist,type="response")>0.5),]
 
 # shortlist final logic
 mod.shortlist<-glm(MVP~G+MP+X3P+DRB+AST+BLK+TOV+PF+PTS+Team.Wins,data=shortlist,family = binomial(link = "logit"))
@@ -126,7 +126,7 @@ shortlist_2018_pred$Pct<-(shortlist_2018_pred$Pct/sum(shortlist_2018_pred$Pct))*
 
 ## write predictions to csv
 pred_dat<-data.frame(Player=shortlist_2018_pred$Player,Pct=shortlist_2018_pred$Pct)
-write.csv(pred_dat, file = "C:/Users/Caio Laptop/Documents/Repositories/nba-models/html/2018Pred.csv",row.names=FALSE)
+write.csv(pred_dat, file = "./Repositories/nba-models/html/2018Pred.csv",row.names=FALSE)
 
 
 # mod refining ideas
@@ -144,7 +144,7 @@ write.csv(pred_dat, file = "C:/Users/Caio Laptop/Documents/Repositories/nba-mode
 
 predMVPs <- function(param.dat,param.mod){
   # make predictions
-  pred<-fitted(param.mod)
+  pred<-predict(param.mod,type="response")
   # create empty MVPs dataframe
   mvps<-param.dat[0,]
   for (year in levels(as.factor(param.dat$Season))) {
