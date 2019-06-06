@@ -10,5 +10,9 @@ function create_table(name, pct) {
   var cell1 = row.insertCell(0);
   var cell2 = row.insertCell(1);
   cell1.innerHTML = name;
-  cell2.innerHTML = Math.trunc(pct)+"%";
+  if (pct < 1){
+    cell2.innerHTML = "⠀<1%";
+  } else {
+    cell2.innerHTML = "⠀"+Math.trunc(pct)+"%";
+  }
 }
