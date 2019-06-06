@@ -59,18 +59,60 @@ dadv_numeric<-select_if(dat_adv, is.numeric)
 corrplot(cor(dadv_numeric,use="complete.obs"))
 
 #######################################################
-################# TOTAL STATS MODELS ##################
+################# PRELIMINARY MODELS ##################
 #######################################################
 
-#######################################################
-############### PERGAME STATS MODELS ##################
-#######################################################
+# models
+## MVP data only
+mod.mvp<-lm(First~Age+G+MP+PTS+TRB+AST+STL+BLK+FG.+X3P.+FT.+Team.Wins,data=dat_mvp)
+summary(mod.mvp)
+mod.mvp.red<-lm(First~G+PTS+TRB+AST+Team.Wins,data=dat_mvp)
+summary(mod.mvp.red)
 
-#######################################################
-################ ADVANCED STATS MODELS ################
-#######################################################
+## total data
+mod.totals<-lm(First~Age+G+GS+MP+FG+FG.+X3P+X3P.+X2P.+FT.+ORB+DRB+AST+STL+BLK+TOV+PF+PTS+Team.Wins,data=dat_totals)
+summary(mod.totals)
 
+# pergame data
+mod.pergame<-lm(First~Age+G+GS+MP+FG+FG.+X3P+X3P.+X2P.+FT.+ORB+DRB+AST+STL+BLK+TOV+PF+PTS+Team.Wins,data=dat_pergame)
+summary(mod.pergame)
 
+# advanced data
+mod.adv<-lm(First~Age+G+MP+PER+TSP+X3PAr+FTr+ORBP+DRBP+TRBP+ASTP+STLP+BLKP+TOVP+USGP+OWS+DWS+WS+
+                  WS.48+OBPM+DBPM+BPM+VORP,data=dat_adv)
+summary(mod.adv)
+
+# actual winners for comparison
+truevals<-dat_mvp[which(dat_mvp$Rank==1),]
+
+# make predictions & calc accuracy
+## MVP data
+### full model
+MVPs.mvp<-predMVPs(dat_mvp,mod.mvp)
+acc.mvp<-calcAccuracy(MVPs.mvp,TRUE)
+### reduced model
+MVPs.mvp.red<-predMVPs(dat_mvp,mod.mvp.red)
+acc.mvp.red<-calcAccuracy(MVPs.mvp.red,TRUE)
+## total stats data
+MVPs.totals<-predMVPs(dat_totals,mod.totals)
+acc.totals<-calcAccuracy(MVPs.totals,FALSE)
+## pergame stats data
+MVPs.pergame<-predMVPs(dat_pergame,mod.pergame)
+acc.pergame<-calcAccuracy(MVPs.pergame,FALSE)
+
+# try logit model
+## MVP data
+mod_logit<-glm(MVP~Age+G+MP+PTS+TRB+AST+STL+BLK+FG.+X3P.+FT.+Team.Wins,data=dat_mvp,family = binomial(link = "logit"))
+summary(mod_logit)
+
+# McFadden's R^2
+#install.packages("pscl")
+library(pscl)
+pR2(mod_logit)
+
+## MVP logit model
+MVPs.logit<-predMVPs(dat_mvp,mod_logit)
+acc.logit<-calcAccuracy(MVPs.logit,FALSE)
 
 
 #######################################################
@@ -108,7 +150,7 @@ MVPs.shortlist.lm<-predMVPs(shortlist,mod.shortlist.lm)
 acc.shortlist.lm<-calcAccuracy(MVPs.shortlist.lm,FALSE)
 
 #######################################################
-#################  PREDICT FOR 2019  ##################
+#################  PREDICT FOR 2018  ##################
 #######################################################
 # LOAD 2019 STATS
 dat_2019<-loadCurrent(normalize = TRUE)
