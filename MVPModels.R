@@ -1,3 +1,7 @@
+## HYPERPARAMETERS
+SHORT_CUTOFF <- 0.75
+
+
 #######################################################
 ############### PROCESS BBALLREF DATA #################
 #######################################################
@@ -43,10 +47,11 @@ dat_totals<-read.csv("./repositories/nba-models/full-data/totals.csv",header=TRU
 dat_pergame<-read.csv("./repositories/nba-models/full-data/pergame.csv",header=TRUE)
 
 # LOAD PERGAME PLAYER STATS
-dat_pergame<-read.csv("./repositories/nba-models/full-data/advanced.csv",header=TRUE)
+dat_adv<-read.csv("./repositories/nba-models/full-data/advanced.csv",header=TRUE)
 
 ## total prelim stats
-#library("dplyr")
+library("dplyr")
+library("corrplot")
 dtot_numeric<-select_if(dat_totals, is.numeric)
 corrplot(cor(dtot_numeric))
 
@@ -57,55 +62,88 @@ corrplot(cor(dmvp_numeric))
 ## advanced prelim stats
 dadv_numeric<-select_if(dat_adv, is.numeric)
 corrplot(cor(dadv_numeric,use="complete.obs"))
+## visualize 
+### VORP VS PER
+plot(dat_adv$VORP, dat_adv$PER)
+dat_adv_mvps <- dat_adv[which(dat_adv$MVP==TRUE),]
+points(dat_adv_mvps$VORP,dat_adv_mvps$PER,pch=19,col="red")
+### WS VS BPM
+plot(dat_adv$WS, dat_adv$BPM)
+dat_adv_mvps <- dat_adv[which(dat_adv$MVP==TRUE),]
+points(dat_adv_mvps$WS,dat_adv_mvps$BPM,pch=19,col="red")
+## weird PER values
+PER_outliers <- dat_adv[which(abs(dat_adv$PER)>30),]
 
 #######################################################
 ################# TOTAL STATS MODELS ##################
+######### NEED TO ACTUALLY CHOOSE PREDICTORS ##########
 #######################################################
+## fit shortlist model
+dat_totals$Shortlist<-dat_totals$Share!=0
+tot.short.mod <- glm(Shortlist~G+MP+X3P+DRB+AST+BLK+TOV+PF+PTS+Team.Wins,data=dat_totals,family = binomial(link = "logit"))
+## grab shortlist
+tot.shortlist<-dat_totals[which(predict(tot.short.mod,type="response")>SHORT_CUTOFF),]
+
+## fit linear
+tot.lm <- lm(First~G+MP+X3P+DRB+AST+BLK+TOV+PF+PTS+Team.Wins,data=tot.shortlist)
+## linear pred
+tot.lm.pred<-predMVPs(tot.shortlist,tot.lm)
+tot.lm.acc<-calcAccuracy(tot.lm.pred,FALSE)
+
+## fit logit
+tot.log <- glm(MVP~G+MP+X3P+DRB+AST+BLK+TOV+PF+PTS+Team.Wins,data=tot.shortlist,family = binomial(link = "logit"))
+## logit pred
+tot.log.pred<-predMVPs(tot.shortlist,tot.log)
+tot.log.acc<-calcAccuracy(tot.log.pred,FALSE)
+
 
 #######################################################
 ############### PERGAME STATS MODELS ##################
 #######################################################
+## fit shortlist model
+dat_pergame$Shortlist<-dat_pergame$Share!=0
+pg.short.mod <- glm(Shortlist~Age+G+GS+MP+FG+FG.+X3P+X3P.+X2P.+FT.+ORB+DRB+AST+STL+BLK+TOV+PF+PTS+Team.Wins,
+                    data=dat_pergame,family = binomial(link = "logit"))
+## grab shortlist
+pg.shortlist<-dat_pergame[which(predict(pg.short.mod,type="response")>SHORT_CUTOFF),]
+
+## fit linear
+pg.lm <- lm(First~Age+G+GS+MP+FG+FG.+X3P+X3P.+X2P.+FT.+ORB+DRB+AST+STL+BLK+TOV+PF+PTS+Team.Wins
+            ,data=pg.shortlist)
+## linear pred
+pg.lm.pred<-predMVPs(pg.shortlist,pg.lm)
+pg.lm.acc<-calcAccuracy(pg.lm.pred,FALSE)
+
+## fit logit
+pg.log <- glm(MVP~Age+G+GS+MP+FG+FG.+X3P+X3P.+X2P.+FT.+ORB+DRB+AST+STL+BLK+TOV+PF+PTS+Team.Wins
+              ,data=pg.shortlist,family = binomial(link = "logit"))
+## logit pred
+pg.log.pred<-predMVPs(pg.shortlist,pg.log)
+pg.log.acc<-calcAccuracy(pg.log.pred,FALSE)
 
 #######################################################
 ################ ADVANCED STATS MODELS ################
 #######################################################
+## fit shortlist model
+dat_adv$Shortlist<-dat_adv$Share!=0
+adv.short.mod <- glm(Shortlist~G+MP+WS+PER+VORP+Team.Wins,
+                    data=dat_adv,family = binomial(link = "logit"))
+## grab shortlist
+adv.shortlist<-dat_adv[which(predict(adv.short.mod,type="response")>.9),]
 
+## fit linear
+adv.lm <- lm(First~(G+WS+PER+VORP+Team.Wins)^2,
+              data=adv.shortlist)
+## linear pred
+adv.lm.pred<-predMVPs(adv.shortlist,adv.lm)
+adv.lm.acc<-calcAccuracy(adv.lm.pred,FALSE)
 
-
-
-#######################################################
-################# SHORTLIST -> TOTAL ##################
-#######################################################
-dat_totals$Shortlist<-dat_totals$Share!=0
-mod.shortlist<-glm(Shortlist~G+MP+X3P+DRB+AST+BLK+TOV+PF+PTS+Team.Wins,data=dat_totals,family = binomial(link = "logit"))
-summary(mod.shortlist)
-
-# McFadden's R^2
-library(pscl)
-pR2(mod.shortlist)
-
-# grab shortlist
-shortlist<-dat_totals[which(predict(mod.shortlist,type="response")>0.5),]
-
-# shortlist final logit
-mod.shortlist<-glm(MVP~G+MP+X3P+DRB+AST+BLK+TOV+PF+PTS+Team.Wins,data=shortlist,family = binomial(link = "logit"))
-summary(mod.shortlist)
-
-# McFadden's R^2
-library(pscl)
-pR2(mod.shortlist)
-
-## MVP logit model
-MVPs.shortlist<-predMVPs(shortlist,mod.shortlist)
-acc.shortlist<-calcAccuracy(MVPs.shortlist,FALSE)
-acc.shortlist
-
-## shortlist - linear regression
-mod.shortlist.lm<-lm(First~Age+G+GS+MP+FG+FG.+X3P+X3P.+X2P.+FT.+ORB+DRB+AST+STL+BLK+TOV+PF+PTS+Team.Wins,data=shortlist)
-summary(mod.shortlist.lm)
-## total stats data
-MVPs.shortlist.lm<-predMVPs(shortlist,mod.shortlist.lm)
-acc.shortlist.lm<-calcAccuracy(MVPs.shortlist.lm,FALSE)
+## fit logit
+adv.log <- glm(MVP~G+WS+PER+VORP+Team.Wins
+              ,data=adv.shortlist,family = binomial(link = "logit"))
+## logit pred
+adv.log.pred<-predMVPs(adv.shortlist,adv.log)
+adv.log.acc<-calcAccuracy(adv.log.pred,FALSE)
 
 #######################################################
 #################  PREDICT FOR 2019  ##################

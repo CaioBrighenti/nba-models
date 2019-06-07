@@ -344,7 +344,7 @@ loadAdvanced <- function(yr_start,yr_end,dat_mvp,normalize) {
   if (normalize==TRUE){
     for (year in levels(as.factor(dat_adv$Season))) {
       for (idx in c(4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27)) {
-        dat_adv[,idx]<-dat_adv[,idx]/max(dat_adv[,idx])
+        dat_adv[,idx]<-dat_adv[,idx]/max(dat_adv[,idx],na.rm=T)
       }
     }
   }
@@ -378,6 +378,12 @@ loadAdvanced <- function(yr_start,yr_end,dat_mvp,normalize) {
   }
   dat_adv$Team.Wins<-type.convert(dat_adv$Team.Wins)
   
+  # remove observations without minimum games
+  if (normalize == TRUE) {
+    dat_adv <- dat_adv[which(dat_adv$G > .5)]
+  } else {
+    dat_adv <- dat_adv[which(dat_adv$G > 41)]
+  }
   
   return(dat_adv)
 }
@@ -427,6 +433,12 @@ loadPerGame <- function(yr_start,yr_end,dat_mvp,normalize) {
   dat_pg$First<-0
   for (idx in 1:dim(dat_mvp)[1]) {
     dat_pg[which(as.character(dat_pg$Player)==as.character(dat_mvp[idx,]$Player)&dat_pg$Season==dat_mvp[idx,]$Season),]$First<-dat_mvp[idx,]$First
+  }
+  
+  # add point share
+  dat_pg$Share<-0
+  for (idx in 1:dim(dat_mvp)[1]) {
+    dat_pg[which(as.character(dat_pg$Player)==as.character(dat_mvp[idx,]$Player)&dat_pg$Season==dat_mvp[idx,]$Season),]$Share<-dat_mvp[idx,]$Share
   }
   
   # fix data.frame classes
