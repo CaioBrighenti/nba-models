@@ -230,6 +230,8 @@ loadTotals <- function(yr_start,yr_end,dat_mvp,normalize) {
   ## needs a better fix eventually
   dat_totals<-dat_totals[which(dat_totals$Tm!="TOT"),]
   dat_totals<-dat_totals[complete.cases(dat_totals), ]
+  # remove observations without minimum games
+  dat_adv <- dat_adv[which(dat_adv$G > 41),]
   
   # normalize data
   if (normalize==TRUE){
@@ -270,6 +272,7 @@ loadTotals <- function(yr_start,yr_end,dat_mvp,normalize) {
   }
   dat_totals$Team.Wins<-type.convert(dat_totals$Team.Wins)
   
+  dat_totals <- dat_totals[,c(1,2,seq(31,34),seq(3,30),35),]
   
   return(dat_totals)
 }
@@ -340,6 +343,9 @@ loadAdvanced <- function(yr_start,yr_end,dat_mvp,normalize) {
   dat_adv<-dat_adv[which(dat_adv$Tm!="TOT"),]
   #dat_adv<-dat_adv[complete.cases(dat_adv), ]
   
+  # remove observations without minimum games
+  dat_adv <- dat_adv[which(dat_adv$G > 41),]
+  
   # normalize data
   if (normalize==TRUE){
     for (year in levels(as.factor(dat_adv$Season))) {
@@ -378,12 +384,7 @@ loadAdvanced <- function(yr_start,yr_end,dat_mvp,normalize) {
   }
   dat_adv$Team.Wins<-type.convert(dat_adv$Team.Wins)
   
-  # remove observations without minimum games
-  if (normalize == TRUE) {
-    dat_adv <- dat_adv[which(dat_adv$G > .5)]
-  } else {
-    dat_adv <- dat_adv[which(dat_adv$G > 41)]
-  }
+  dat_adv <- dat_adv[,c(1,2,seq(28,31),seq(3,27),32)]
   
   return(dat_adv)
 }
@@ -452,6 +453,8 @@ loadPerGame <- function(yr_start,yr_end,dat_mvp,normalize) {
   ## needs a better fix eventually
   dat_pg<-dat_pg[which(dat_pg$Tm!="TOT"),]
   dat_pg<-dat_pg[complete.cases(dat_pg), ]
+  # remove observations without minimum games
+  dat_adv <- dat_adv[which(dat_adv$G > 41),]
   
   # normalize data
   if (normalize==TRUE){
