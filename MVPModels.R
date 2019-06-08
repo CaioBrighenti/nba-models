@@ -1,5 +1,6 @@
 ## HYPERPARAMETERS
-SHORT_CUTOFF <- 0.5
+SHORT_CUTOFF <- 0.9
+NORM <- TRUE
 
 #######################################################
 ################## LOAD MERGED CSVs ###################
@@ -21,29 +22,29 @@ dat_pergame<-read.csv("./repositories/nba-models/full-data/pergame.csv",header=T
 dat_adv<-read.csv("./repositories/nba-models/full-data/advanced.csv",header=TRUE)
 
 ## total prelim stats
-library("dplyr")
-library("corrplot")
-par(mfrow=c(1,1))
-dtot_numeric<-select_if(dat_totals, is.numeric)
-corrplot(cor(dtot_numeric))
-
-## MVP prelim stats
-dmvp_numeric<-select_if(dat_mvp, is.numeric)
-corrplot(cor(dmvp_numeric))
-
-## advanced prelim stats
-dadv_numeric<-select_if(dat_adv, is.numeric)
-corrplot(cor(dadv_numeric,use="complete.obs"))
-## visualize 
-par(mfrow=c(1,2))
-### VORP VS PER
-plot(dat_adv$VORP, dat_adv$PER)
-dat_adv_mvps <- dat_adv[which(dat_adv$MVP==TRUE),]
-points(dat_adv_mvps$VORP,dat_adv_mvps$PER,pch=19,col="red")
-### WS VS BPM
-plot(dat_adv$WS, dat_adv$BPM)
-dat_adv_mvps <- dat_adv[which(dat_adv$MVP==TRUE),]
-points(dat_adv_mvps$WS,dat_adv_mvps$BPM,pch=19,col="red")
+# library("dplyr")
+# library("corrplot")
+# par(mfrow=c(1,1))
+# dtot_numeric<-select_if(dat_totals, is.numeric)
+# corrplot(cor(dtot_numeric))
+# 
+# ## MVP prelim stats
+# dmvp_numeric<-select_if(dat_mvp, is.numeric)
+# corrplot(cor(dmvp_numeric))
+# 
+# ## advanced prelim stats
+# dadv_numeric<-select_if(dat_adv, is.numeric)
+# corrplot(cor(dadv_numeric,use="complete.obs"))
+# ## visualize 
+# par(mfrow=c(1,2))
+# ### VORP VS PER
+# plot(dat_adv$VORP, dat_adv$PER)
+# dat_adv_mvps <- dat_adv[which(dat_adv$MVP==TRUE),]
+# points(dat_adv_mvps$VORP,dat_adv_mvps$PER,pch=19,col="red")
+# ### WS VS BPM
+# plot(dat_adv$WS, dat_adv$BPM)
+# dat_adv_mvps <- dat_adv[which(dat_adv$MVP==TRUE),]
+# points(dat_adv_mvps$WS,dat_adv_mvps$BPM,pch=19,col="red")
 
 #######################################################
 ################# TOTAL STATS MODELS ##################
@@ -69,7 +70,8 @@ tot.log.acc<-calcAccuracy(tot.log.pred,FALSE)
 
 ## LASSO 
 library(glmnet)
-x = model.matrix(First~G+MP+X3P+DRB+AST+BLK+TOV+PF+PTS+Team.Wins,data=tot.shortlist)
+x = model.matrix(First~as.factor(Pos)+Age+G+GS+MP+FG+FGA+FG.+X3P+X3PA+X3P.+X2P+X2PA+X2P.+
+                   eFG.+FT+FTA+FT.+ORB+DRB+TRB+AST+STL+BLK+TOV+PF+PTS+Team.Wins,data=tot.shortlist)
 y = tot.shortlist$First
 tot.cv.out <- cv.glmnet(x,y,alpha=1)
 lasso.coef=predict(tot.cv.out,type="coefficients",s=tot.cv.out$lambda.min)
@@ -119,23 +121,23 @@ pg.poly.acc<-calcAccuracy(pg.poly.pred,FALSE)
 #######################################################
 ## fit shortlist model
 dat_adv$Shortlist<-dat_adv$Share!=0
-adv.short.mod <- glm(Shortlist~G+MP+PER+TSP+X3PAr+FTr+ORBP+DRBP+TRBP+ASTP+STLP+BLKP+
-                     TOVP+USGP+OWS+DWS+WS+WS.48+OBPM+DBPM+BPM+VORP+Team.Wins,
+adv.short.mod <- glm(Shortlist~G+MP+PER+TS.+X3PAr+FTr+ORB.+DRB.+TRB.+AST.+STL.+BLK.+
+                     TOV.+USG.+OWS+DWS+WS+WS.48+OBPM+DBPM+BPM+VORP+Team.Wins,
                     data=dat_adv,family = binomial(link = "logit"))
 ## grab shortlist
 adv.shortlist<-dat_adv[which(predict(adv.short.mod,type="response")>SHORT_CUTOFF),]
 
 ## fit linear
-adv.lm <- lm(First~G+PER+TSP+X3PAr+FTr+TRBP+ASTP+STLP+BLKP+
-              TOVP+USGP+WS+BPM+VORP+Team.Wins,
+adv.lm <- lm(First~G+PER+TS.+X3PAr+FTr+TRB.+AST.+STL.+BLK.+
+              TOV.+USG.+WS+BPM+VORP+Team.Wins,
               data=adv.shortlist)
 ## linear pred
 adv.lm.pred<-predMVPs(adv.shortlist,adv.lm)
 adv.lm.acc<-calcAccuracy(adv.lm.pred,FALSE)
 
 ## fit logit
-adv.log <- glm(MVP~PER+TSP+X3PAr+FTr+TRBP+ASTP+STLP+BLKP+
-                 TOVP+USGP+WS+BPM+VORP+Team.Wins
+adv.log <- glm(MVP~PER+TS.+X3PAr+FTr+TRB.+AST.+STL.+BLK.+
+                 TOV.+USG.+WS+BPM+VORP+Team.Wins
                 ,data=adv.shortlist,family = binomial(link = "logit"))
 ## logit pred
 adv.log.pred<-predMVPs(adv.shortlist,adv.log)
@@ -143,16 +145,16 @@ adv.log.acc<-calcAccuracy(adv.log.pred,FALSE)
 
 ## LASSO 
 #library(glmnet)
-x = model.matrix(First~G+MP+PER+TSP+X3PAr+FTr+ORBP+DRBP+TRBP+ASTP+STLP+BLKP+
-                   TOVP+USGP+OWS+DWS+WS+WS.48+OBPM+DBPM+BPM+VORP+Team.Wins
+x = model.matrix(First~G+MP+PER+TS.+X3PAr+FTr+ORB.+DRB.+TRB.+AST.+STL.+BLK.+
+                   TOV.+USG.+OWS+DWS+WS+WS.48+OBPM+DBPM+BPM+VORP+Team.Wins
                   ,data=adv.shortlist)
 y = adv.shortlist$First
 adv.cv.out <- cv.glmnet(x,y,alpha=1)
 adv.lasso.coef=predict(adv.cv.out,type="coefficients",s=adv.cv.out$lambda.min)
 
 ## fit poly
-adv.poly <- lm(First~poly(PER,3)+poly(TSP,3)+poly(X3PAr,3)+poly(FTr,3)+poly(TRBP,3)+poly(ASTP,3)+poly(STLP,3)+poly(BLKP,3)+
-                 poly(TOVP,3)+poly(USGP,3)+poly(WS,3)+poly(BPM,3)+poly(VORP,3)+poly(Team.Wins,3),
+adv.poly <- lm(First~poly(PER,3)+poly(TS.,3)+poly(X3PAr,3)+poly(FTr,3)+poly(TRB.,3)+poly(AST.,3)+poly(STL.,3)+poly(BLK.,3)+
+                 poly(TOV.,3)+poly(USG.,3)+poly(WS,3)+poly(BPM,3)+poly(VORP,3)+poly(Team.Wins,3),
                data=adv.shortlist)
 ## poly pred
 adv.poly.pred<-predMVPs(adv.shortlist,adv.poly)
@@ -162,8 +164,6 @@ adv.poly.acc<-calcAccuracy(adv.poly.pred,FALSE)
 ##################### MERGED DATA  ####################
 #######################################################
 ## merge data
-#PER+TSP+X3PAr+FTr+TRBP+ASTP+STLP+BLKP+
-#TOVP+USGP+WS+BPM+VORP+Team.Wins
 dat_merge <- dat_totals
 adv_subset <- dat_adv[,c(2,3,12,13,14,15,18,19,20,21,22,23,26,30,31)]
 dat_merge <- merge(dat_merge,adv_subset,by=c("Player","Season"))
@@ -187,29 +187,29 @@ for (year in levels(as.factor(merge.shortlist$Season))) {
 merge.acc<-calcAccuracy(merge.mvps,FALSE)
 
 ## fit linear
-merge.lm <- lm(First~G+PER+TSP+X3PAr+FTr+TRBP+ASTP+STLP+BLKP+
-                TOVP+USGP+WS+BPM+VORP+Team.Wins+PER+TSP+X3PAr+
-                FTr+TRBP+ASTP+STLP+BLKP+TOVP+USGP+WS+BPM+VORP,
+merge.lm <- lm(First~G+PER+TS.+X3PAr+FTr+TRB.+AST.+STL.+BLK.+
+                TOV.+USG.+WS+BPM+VORP+Team.Wins+X3P+DRB+
+                AST+BLK+PF+PTS,
                 data=merge.shortlist)
 ## linear pred
 merge.lm.pred<-predMVPs(merge.shortlist,merge.lm)
 merge.lm.acc<-calcAccuracy(merge.lm.pred,FALSE)
 
 ## fit logit
-merge.log <- glm(MVP~G+PER+TSP+X3PAr+FTr+TRBP+ASTP+STLP+BLKP+
-                  TOVP+USGP+WS+BPM+VORP+Team.Wins+PER+TSP+X3PAr+
-                  FTr+TRBP+ASTP+STLP+BLKP+TOVP+USGP+WS+BPM+VORP,
-                  data=merge.shortlist,family = binomial(link = "logit"))
+merge.log <- glm(MVP~G+PER+TS.+X3PAr+FTr+TRB.+AST.+STL.+BLK.+
+                   TOV.+USG.+WS+BPM+VORP+Team.Wins+X3P+DRB+
+                   AST+BLK+PF+PTS,
+                   data=merge.shortlist,family = binomial(link = "logit"))
 ## logit pred
 merge.log.pred<-predMVPs(merge.shortlist,merge.log)
 merge.log.acc<-calcAccuracy(merge.log.pred,FALSE)
 
 ## fit poly
-merge.poly <- lm(First~poly(G,3)+poly(PER,3)+poly(TSP,3)+poly(X3PAr,3)+poly(FTr,3)+poly(TRBP,3)+
-                  poly(ASTP,3)+poly(STLP,3)+poly(BLKP,3)+poly(TOVP,3)+poly(USGP,3)+poly(WS,3)+
-                  poly(BPM,3)+poly(VORP,3)+poly(Team.Wins,3)+poly(PER,3)+poly(TSP,3)+poly(X3PAr,3)+
-                  poly(FTr,3)+poly(TRBP,3)+poly(ASTP,3)+poly(STLP,3)+poly(BLKP,3)+poly(TOVP,3)+
-                  poly(USGP,3)+poly(WS,3)+poly(BPM,3)+poly(VORP,3),
+merge.poly <- lm(First~poly(G,3)+poly(PER,3)+poly(TS.,3)+poly(X3PAr,3)+poly(FTr,3)+poly(TRB.,3)+
+                  poly(AST.,3)+poly(STL.,3)+poly(BLK.,3)+poly(TOV.,3)+poly(USG.,3)+poly(WS,3)+
+                  poly(BPM,3)+poly(VORP,3)+poly(Team.Wins,3)+poly(PER,3)+poly(TS.,3)+poly(X3PAr,3)+
+                  poly(FTr,3)+poly(TRB.,3)+poly(AST.,3)+poly(STL.,3)+poly(BLK.,3)+poly(TOV.,3)+
+                  poly(USG.,3)+poly(WS,3)+poly(BPM,3)+poly(VORP,3),
                   data=merge.shortlist)
 ## poly pred
 merge.poly.pred<-predMVPs(merge.shortlist,merge.poly)
@@ -235,8 +235,9 @@ mlm.cv.acc<-accuracyCV(merge.shortlist,merge.lm)
 mlog.cv.acc<-accuracyCV(merge.shortlist,merge.log)
 mpoly.cv.acc<-accuracyCV(merge.shortlist,merge.poly)
 ## aggregate model
-agg.cv.acc<-aggregateCV(merge.shortlist,tot.lm,adv.lm)
-
+agglm.cv.acc<-aggregateCV(merge.shortlist,merge.lm,merge.log)
+agglog.cv.acc<-aggregateCV(merge.shortlist,tot.log,pg.log)
+aggpoly.cv.acc<-aggregateCV(merge.shortlist,tot.poly,pg.poly)
 
 #######################################################
 #################### SUMMARY PLOTS ####################
@@ -260,7 +261,12 @@ xx=barplot(c(accs$Linear,accs$LOOCV.lm,accs$Logistic,accs$LOOCV.log,accs$Cubic,a
            ylab="Accuracy", 
            main="Model Accuracies - 2000-2018"
           )
-mtext(paste("Normalized -","Shortlist",SHORT_CUTOFF,"cutoff"))
+if(NORM){
+  str<-"Normalized -"
+} else {
+  str<-"Unnormalized -"
+}
+mtext(paste(str,"Shortlist",SHORT_CUTOFF,"cutoff"))
 text(x=xx,
      y=c(accs$Linear,accs$LOOCV.lm,accs$Logistic,accs$LOOCV.log,accs$Cubic,accs$LOOCV.poly),
      label=round(c(accs$Linear,accs$LOOCV.lm,accs$Logistic,accs$LOOCV.log,accs$Cubic,accs$LOOCV.poly),digits=3),
@@ -276,34 +282,26 @@ legend("bottomright",
 #################  PREDICT FOR 2019  ##################
 #######################################################
 # LOAD 2019 STATS
-# dat_2019<-loadCurrent(normalize = TRUE)
-# #dat_2019<-dat_totals[which(dat_totals$Season==2011),]
-# 
-# # predict shortlist
-# shortlist.pred<-predict(mod.shortlist,dat_2019)
-# shortlist_2019<-dat_2019[order(-shortlist.pred),]
-# shortlist_2019<-shortlist_2019[1:10,]
-# 
-# 
-# # predict winner - no shortlist
-# pred<-predict(mod.shortlist,dat_2019,type="response")
-# dat_2019_pred<-dat_2019
-# dat_2019_pred$Pred<-pred
-# dat_2019_pred<-dat_2019_pred[order(-dat_2019_pred$Pred),] 
-# 
-# # predict winner - with shortlist
-# pred<-predict(mod.shortlist,shortlist_2019,type="response")
-# shortlist_2019_pred<-shortlist_2019
-# shortlist_2019_pred$Pred<-pred
-# shortlist_2019_pred<-shortlist_2019_pred[order(-shortlist_2019_pred$Pred),] 
-# 
-# # turn shortlist predictions into percentages
-# shortlist_2019_pred$Pct<-shortlist_2019_pred$Pred-min(shortlist_2019_pred$Pred)
-# shortlist_2019_pred$Pct<-(shortlist_2019_pred$Pct/sum(shortlist_2019_pred$Pct))*100
-# 
-# ## write predictions to csv
-# pred_dat<-data.frame(Player=shortlist_2019_pred$Player,Pct=shortlist_2019_pred$Pct)
-# write.csv(pred_dat, file = "./repositories/nba-models/html/2019Pred.csv",row.names=FALSE)
+dat_2019_tot<-loadCurrent(normalize = FALSE)
+dat_2019_adv<-loadCurrentAdv(normalize = TRUE)
+
+# predict shortlist
+shortlist.pred<-predict(tot.short.mod,dat_2019_tot)
+shortlist_2019<-dat_2019_tot[order(-shortlist.pred),]
+shortlist_2019<-shortlist_2019[1:10,]
+
+# predict winner - with shortlist
+pred<-predict(tot.lm,shortlist_2019,type="response")
+shortlist_2019$Pred<-pred
+shortlist_2019<-shortlist_2019[order(-shortlist_2019$Pred),]
+
+# turn shortlist predictions into percentages
+shortlist_2019$Pct<-shortlist_2019$Pred-min(shortlist_2019$Pred)
+shortlist_2019$Pct<-(shortlist_2019$Pct/sum(shortlist_2019$Pct))*100
+
+## write predictions to csv
+pred_dat<-data.frame(Player=shortlist_2019$Player,Pct=shortlist_2019$Pct)
+write.csv(pred_dat, file = "./repositories/nba-models/html/2019Pred.csv",row.names=FALSE)
 
 
 # mod refining ideas
@@ -352,15 +350,20 @@ calcAccuracy <- function(mvps,ranks) {
 
 accuracyCV <- function(param.dat,param.mod){
   # extract formula from model
-  formula <- param.mod$call[2]
   mvps<-param.dat[0,]
   for (year in min(param.dat$Season):max(param.dat$Season)) {
     # leave out one year
     test <- param.dat[which(param.dat$Season == year),]
     train <- param.dat[which(param.dat$Season != year),]
     # train model on remaining
-    ## fit linear
-    cv <- lm(formula,data=train)
+    ## fit model
+    if (param.mod$call[1]=="glm()"){
+      ## logistic
+      cv <- glm(param.mod$call[2],data=train,family = binomial(link = "logit"))
+    } else {
+      ## linear
+      cv <- lm(param.mod$call[2],data=train)
+    }
     ## linear pred
     cv.pred<-predict(cv,newdata=test,type="response")
     cv.mvp<-test[which(cv.pred == max(cv.pred)),]
@@ -377,13 +380,22 @@ aggregateCV <- function(param.dat,mod1,mod2){
     test <- param.dat[which(param.dat$Season == year),]
     train <- param.dat[which(param.dat$Season != year),]
     # train model on remaining
+    ### FIRST MODEL
     if (mod1$call[1]=="glm()"){
-      print("logistic")
+      ## logistic
+      cv1 <- glm(mod1$call[2],data=train,family = binomial(link = "logit"))
+    } else {
+      ## linear
+      cv1 <- lm(mod1$call[2],data=train)
     }
-    ## fit linear 1
-    cv1 <- lm(mod1$call[2],data=train)
-    ## fit linear 2
-    cv2 <- lm(mod2$call[2],data=train)
+    ### SECOND MODEL
+    if (mod2$call[1]=="glm()"){
+      ## logistic
+      cv2 <- glm(mod2$call[2],data=train,family = binomial(link = "logit"))
+    } else {
+      ## linear
+      cv2 <- lm(mod2$call[2],data=train)
+    }
     ## predict for each model
     cv1.pred<-predict(cv1,newdata=test,type="response")
     cv2.pred<-predict(cv2,newdata=test,type="response")

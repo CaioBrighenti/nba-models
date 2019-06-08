@@ -314,8 +314,8 @@ loadTotals <- function(yr_start,yr_end,dat_mvp,normalize) {
 #######################################################
 loadAdvanced <- function(yr_start,yr_end,dat_mvp,normalize) {
   dat_adv<-data.frame(Rk=integer(),Player=character(),Pos=character(),Age=double(),Tm=character(), G=integer(),
-                        MP=double(),PER=double(),TSP=double(),X3PAr=double(),FTr=double(),ORBP=double(),
-                        DRBP=double(),TRBP=double(),ASTP=double(),STLP=double(),BLKP=double(),TOVP=double(),USGP=double(),
+                        MP=double(),PER=double(),TS.=double(),X3PAr=double(),FTr=double(),ORB.=double(),
+                        DRB.=double(),TRB.=double(),AST.=double(),STL.=double(),BLK.=double(),TOV.=double(),USG.=double(),
                         X=double(),OWS=double(),DWS=double(),WS=double(),WS.48=double(),X.1=double(),OBPM=double(),DBPM=double(),
                         BPM=double(),VORP=double(),Season=integer())
   for (year in yr_start:yr_end) {
@@ -576,6 +576,7 @@ loadCurrent <- function(normalize) {
     for (year in levels(as.factor(dat_2019$Season))) {
       for (idx in c(4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30)) {
         dat_2019[,idx]<-dat_2019[,idx]/max(dat_2019[,idx])
+        dat_2019[,idx]<-round(dat_2019[,idx], digits = 3)
       }
     }
   }
@@ -608,6 +609,89 @@ loadCurrent <- function(normalize) {
     }
   }
   dat_2019$Team.Wins<-type.convert(dat_2019$Team.Wins)
+  
+  return(dat_2019)
+}
+
+#######################################################
+#################### 2019 ADV  ######################## 
+#######################################################
+loadCurrentAdv <- function(normalize) {
+  # read data
+  str<-paste("./Repositories/nba-models/season-stats-advanced/",2019,".csv",sep="")
+  dat_2019<-read.csv(str, header = TRUE)
+  
+  # add season column
+  dat_2019$Season<-2019
+  
+  # clean player names
+  dat_2019$Player<-as.character(dat_2019$Player)
+  names<-strsplit(as.character(dat_2019$Player),"[\\\\]")
+  for (idx in 1:dim(dat_2019)[1]) {
+    name<-names[[idx]][1]
+    name<-gsub("[*]","",name)
+    dat_2019$Player[idx]<-name
+  }
+  
+  ## add MVP winning seasons
+  dat_2019$MVP<-FALSE
+  
+  # add first place votes
+  dat_2019$First<-0
+  
+  # fix data.frame classes
+  for (idx in c(4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,30)) {
+    class(dat_2019[,idx])
+    dat_2019[,idx]<-as.numeric(type.convert(dat_2019[,idx]))
+    class(dat_2019[,idx])
+  }
+  
+  # remove TOT seasons & missing observations
+  ## needs a better fix eventually
+  dat_2019<-dat_2019[which(dat_2019$Tm!="TOT"),]
+  #dat_2019<-dat_2019[complete.cases(dat_2019), ]
+  dat_2019<-dat_2019[which(dat_2019$G>41),]
+  
+  # normalize data
+  if (normalize==TRUE){
+    for (year in levels(as.factor(dat_2019$Season))) {
+      for (idx in c(4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27)) {
+        dat_2019[,idx]<-dat_2019[,idx]/max(dat_2019[,idx])
+        dat_2019[,idx]<-round(dat_2019[,idx], digits = 3)
+      }
+    }
+  }
+  
+  # fix team strings
+  ## standings full team name, player stats abbreviated
+  abbrev<-c("ATL","BOS","BRK","BUF","CHA","CHH","CHI","CHO","CLE","DAL","DEN","DET","GSW","HOU","IND","LAC","LAL",
+            "MEM","MIA","MIL","MIN","NJN","NOH","NOJ","NOK","NOP","NYK","NYN","OKC","ORL","PHI","PHO","POR","SAC","SAS",
+            "SDC","SEA","TOR","UTA","VAN","WAS","WSB","KCK")
+  fullnames<-c("Atlanta Hawks","Boston Celtics","Brooklyn Nets","Buffalo Braves","Charlotte Bobcats",
+               "Charlotte Hornets","Chicago Bulls","Charlotte Hornets","Cleveland Cavaliers","Dallas Mavericks","Denver Nuggets",
+               "Detroit Pistons","Golden State Warriors","Houston Rockets","Indiana Pacers","Los Angeles Clippers",
+               "Los Angeles Lakers","Memphis Grizzlies","Miami Heat","Milwaukee Bucks","Minnesota Timberwolves",
+               "New Jersey Nets","New Orleans Hornets","New Orleans Jazz","New Orleans/Oklahoma City Hornets","New Orleans Pelicans",
+               "New York Knicks","New York Nets","Oklahoma City Thunder","Orlando Magic","Philadelphia 76ers","Phoenix Suns",
+               "Portland Trail Blazers","Sacramento Kings","San Antonio Spurs","San Diego Clippers","Seattle SuperSonics",
+               "Toronto Raptors","Utah Jazz","Vancouver Grizzlies","Washington Wizards","Washington Bullets","Kansas City Kings")
+  names(fullnames)<-abbrev
+  
+  # add team wins
+  dat_2019$Team.Wins<-0
+  for (team_abbrev in levels(as.factor(dat_2019$Tm))) {
+    for (season in levels(as.factor(dat_2019$Season))) {
+      team_name<-fullnames[team_abbrev]
+      roster<-dat_2019[which(as.character(dat_2019$Tm)==team_abbrev & as.character(dat_2019$Season)==season),]
+      if (dim(roster)[1]!=0) {
+        roster$Team.Wins<-dat_std[which(as.character(dat_std$Team)==team_name & as.character(dat_std$Season)==season),]$Wins
+      }
+      dat_2019[which(as.character(dat_2019$Tm)==team_abbrev & as.character(dat_2019$Season)==season),]<-roster
+    }
+  }
+  dat_2019$Team.Wins<-type.convert(dat_2019$Team.Wins)
+  
+  dat_2019 <- dat_2019[,c(1,2,seq(30,32),seq(3,29),33)]
   
   return(dat_2019)
 }
