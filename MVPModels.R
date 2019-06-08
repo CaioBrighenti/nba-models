@@ -1,34 +1,5 @@
 ## HYPERPARAMETERS
-SHORT_CUTOFF <- 0.75
-
-
-#######################################################
-############### PROCESS BBALLREF DATA #################
-#######################################################
-
-source("./repositories/nba-models/loadData.R")
-
-# LOAD STANDINGS DATA
-dat_std<-loadStandings(1990,2019)
-
-# LOAD MVP DATA
-dat_mvp<-loadMVP(1990,2018,dat_std)
-
-# LOAD TOTAL PLAYER STATS
-dat_totals<-loadTotals(1990,2018,dat_mvp,normalize=TRUE)
-
-# LOAD PERGAME PLAYER STATS
-dat_pergame<-loadPerGame(1990,2018,dat_mvp,normalize=TRUE)
-
-# LOAD ADVANCED PLAYER STATS
-dat_adv<-loadAdvanced(1990,2018,dat_mvp,normalize=TRUE)
-
-# WRITE TO CSVs
-write.csv(dat_std,file = "./repositories/nba-models/full-data/standings.csv",row.names=FALSE)
-write.csv(dat_mvp,file = "./repositories/nba-models/full-data/mvp.csv",row.names=FALSE)
-write.csv(dat_totals,file = "./repositories/nba-models/full-data/totals.csv",row.names=FALSE)
-write.csv(dat_pergame,file = "./repositories/nba-models/full-data/pergame.csv",row.names=FALSE)
-write.csv(dat_adv,file = "./repositories/nba-models/full-data/advanced.csv",row.names=FALSE)
+SHORT_CUTOFF <- 0.5
 
 #######################################################
 ################## LOAD MERGED CSVs ###################
@@ -50,8 +21,8 @@ dat_pergame<-read.csv("./repositories/nba-models/full-data/pergame.csv",header=T
 dat_adv<-read.csv("./repositories/nba-models/full-data/advanced.csv",header=TRUE)
 
 ## total prelim stats
-#library("dplyr")
-#library("corrplot")
+library("dplyr")
+library("corrplot")
 par(mfrow=c(1,1))
 dtot_numeric<-select_if(dat_totals, is.numeric)
 corrplot(cor(dtot_numeric))
@@ -76,7 +47,6 @@ points(dat_adv_mvps$WS,dat_adv_mvps$BPM,pch=19,col="red")
 
 #######################################################
 ################# TOTAL STATS MODELS ##################
-######### NEED TO ACTUALLY CHOOSE PREDICTORS ##########
 #######################################################
 ## fit shortlist model
 dat_totals$Shortlist<-dat_totals$Share!=0
@@ -98,11 +68,18 @@ tot.log.pred<-predMVPs(tot.shortlist,tot.log)
 tot.log.acc<-calcAccuracy(tot.log.pred,FALSE)
 
 ## LASSO 
-#library(glmnet)
+library(glmnet)
 x = model.matrix(First~G+MP+X3P+DRB+AST+BLK+TOV+PF+PTS+Team.Wins,data=tot.shortlist)
 y = tot.shortlist$First
 tot.cv.out <- cv.glmnet(x,y,alpha=1)
 lasso.coef=predict(tot.cv.out,type="coefficients",s=tot.cv.out$lambda.min)
+
+## fit poly
+tot.poly <- lm(First~poly(G,3)+poly(X3P,3)+poly(DRB,3)+poly(AST,3)+poly(BLK,3)+poly(PF,3)+
+               poly(PTS,3)+poly(Team.Wins,3),data=tot.shortlist)
+## poly pred
+tot.poly.pred<-predMVPs(tot.shortlist,tot.poly)
+tot.poly.acc<-calcAccuracy(tot.poly.pred,FALSE)
 
 
 #######################################################
@@ -128,6 +105,14 @@ pg.log <- glm(MVP~Age+G+GS+MP+FG+FG.+X3P+X3P.+X2P.+FT.+ORB+DRB+AST+STL+BLK+TOV+P
 ## logit pred
 pg.log.pred<-predMVPs(pg.shortlist,pg.log)
 pg.log.acc<-calcAccuracy(pg.log.pred,FALSE)
+
+## fit poly
+pg.poly <- lm(First~poly(Age,3)+poly(G,3)+poly(GS,3)+poly(MP,3)+poly(FG,3)+poly(FG.,3)+poly(X3P,3)+poly(X3P.,3)+poly(X2P.,3)+
+                poly(FT.,3)+poly(ORB,3)+poly(DRB,3)+poly(AST,3)+poly(STL,3)+poly(BLK,3)+poly(TOV,3)+poly(PF,3)+
+                poly(PTS,3)+poly(Team.Wins,3),data=pg.shortlist)
+## poly pred
+pg.poly.pred<-predMVPs(pg.shortlist,pg.poly)
+pg.poly.acc<-calcAccuracy(pg.poly.pred,FALSE)
 
 #######################################################
 ################ ADVANCED STATS MODELS ################
@@ -164,6 +149,14 @@ x = model.matrix(First~G+MP+PER+TSP+X3PAr+FTr+ORBP+DRBP+TRBP+ASTP+STLP+BLKP+
 y = adv.shortlist$First
 adv.cv.out <- cv.glmnet(x,y,alpha=1)
 adv.lasso.coef=predict(adv.cv.out,type="coefficients",s=adv.cv.out$lambda.min)
+
+## fit poly
+adv.poly <- lm(First~poly(PER,3)+poly(TSP,3)+poly(X3PAr,3)+poly(FTr,3)+poly(TRBP,3)+poly(ASTP,3)+poly(STLP,3)+poly(BLKP,3)+
+                 poly(TOVP,3)+poly(USGP,3)+poly(WS,3)+poly(BPM,3)+poly(VORP,3)+poly(Team.Wins,3),
+               data=adv.shortlist)
+## poly pred
+adv.poly.pred<-predMVPs(adv.shortlist,adv.poly)
+adv.poly.acc<-calcAccuracy(adv.poly.pred,FALSE)
 
 #######################################################
 ##################### MERGED DATA  ####################
@@ -211,43 +204,71 @@ merge.log <- glm(MVP~G+PER+TSP+X3PAr+FTr+TRBP+ASTP+STLP+BLKP+
 merge.log.pred<-predMVPs(merge.shortlist,merge.log)
 merge.log.acc<-calcAccuracy(merge.log.pred,FALSE)
 
+## fit poly
+merge.poly <- lm(First~poly(G,3)+poly(PER,3)+poly(TSP,3)+poly(X3PAr,3)+poly(FTr,3)+poly(TRBP,3)+
+                  poly(ASTP,3)+poly(STLP,3)+poly(BLKP,3)+poly(TOVP,3)+poly(USGP,3)+poly(WS,3)+
+                  poly(BPM,3)+poly(VORP,3)+poly(Team.Wins,3)+poly(PER,3)+poly(TSP,3)+poly(X3PAr,3)+
+                  poly(FTr,3)+poly(TRBP,3)+poly(ASTP,3)+poly(STLP,3)+poly(BLKP,3)+poly(TOVP,3)+
+                  poly(USGP,3)+poly(WS,3)+poly(BPM,3)+poly(VORP,3),
+                  data=merge.shortlist)
+## poly pred
+merge.poly.pred<-predMVPs(merge.shortlist,merge.poly)
+merge.poly.acc<-calcAccuracy(merge.poly.pred,FALSE)
+
 #######################################################
 ################## CROSS VALIDATION ###################
 #######################################################
+# total data
 tlm.cv.acc<-accuracyCV(tot.shortlist,tot.lm)
 tlog.cv.acc<-accuracyCV(tot.shortlist,tot.log)
+tpoly.cv.acc<-accuracyCV(tot.shortlist,tot.poly)
+# per game data
 plm.cv.acc<-accuracyCV(pg.shortlist,pg.lm)
 plog.cv.acc<-accuracyCV(pg.shortlist,pg.log)
+ppoly.cv.acc<-accuracyCV(pg.shortlist,pg.poly)
+# advanced data
 alm.cv.acc<-accuracyCV(adv.shortlist,adv.lm)
 alog.cv.acc<-accuracyCV(adv.shortlist,adv.log)
+apoly.cv.acc<-accuracyCV(adv.shortlist,adv.poly)
+# merged data
 mlm.cv.acc<-accuracyCV(merge.shortlist,merge.lm)
 mlog.cv.acc<-accuracyCV(merge.shortlist,merge.log)
+mpoly.cv.acc<-accuracyCV(merge.shortlist,merge.poly)
+## aggregate model
+agg.cv.acc<-aggregateCV(merge.shortlist,tot.lm,adv.lm)
+
 
 #######################################################
 #################### SUMMARY PLOTS ####################
 #######################################################
-accs <- data.frame(Data=c("Totals","Per Game","Advanced","Tot. + Adv."),Linear=c(tot.lm.acc,pg.lm.acc,adv.lm.acc,merge.lm.acc),
+accs <- data.frame(Data=c("dat_tot","dat_pergame","dat_adv","dat_merge"),
+                   Linear=c(tot.lm.acc,pg.lm.acc,adv.lm.acc,merge.lm.acc),
                    Logistic=c(tot.log.acc,pg.log.acc,adv.log.acc,merge.log.acc),
+                   Cubic=c(tot.poly.acc,pg.poly.acc,adv.poly.acc,merge.poly.acc),
                    LOOCV.lm=c(tlm.cv.acc,plm.cv.acc,alm.cv.acc,mlm.cv.acc),
-                   LOOCV.log=c(tlog.cv.acc,plog.cv.acc,alog.cv.acc,mlog.cv.acc))
+                   LOOCV.log=c(tlog.cv.acc,plog.cv.acc,alog.cv.acc,mlog.cv.acc),
+                   LOOCV.poly=c(tpoly.cv.acc,ppoly.cv.acc,apoly.cv.acc,mpoly.cv.acc))
 par(mfrow=c(1,1))
 #library(RColorBrewer)
-xx=barplot(c(accs$Linear,accs$LOOCV.lm,accs$Logistic,accs$LOOCV.log), 
-           names.arg=rep(accs$Data,times=4),
+library(viridis)
+vir=viridis(6)
+xx=barplot(c(accs$Linear,accs$LOOCV.lm,accs$Logistic,accs$LOOCV.log,accs$Cubic,accs$LOOCV.poly), 
+           names.arg=rep(accs$Data,times=6),
            ylim=c(0,1),
            las=2,
-           col=c(rep("blue",4),rep("red",4),rep("green",4),rep("yellow",4)),
+           col=c(rep(vir[1],4),rep(vir[2],4),rep(vir[3],4),rep(vir[4],4),rep(vir[5],4),rep(vir[6],4)),
            ylab="Accuracy", 
-           main="Model Accuracies"
+           main="Model Accuracies - 2000-2018"
           )
+mtext(paste("Normalized -","Shortlist",SHORT_CUTOFF,"cutoff"))
 text(x=xx,
-     y=c(accs$Linear,accs$LOOCV.lm,accs$Logistic,accs$LOOCV.log),
-     label=round(c(accs$Linear,accs$LOOCV.lm,accs$Logistic,accs$LOOCV.log),digits=3),
+     y=c(accs$Linear,accs$LOOCV.lm,accs$Logistic,accs$LOOCV.log,accs$Cubic,accs$LOOCV.poly),
+     label=round(c(accs$Linear,accs$LOOCV.lm,accs$Logistic,accs$LOOCV.log,accs$Cubic,accs$LOOCV.poly),digits=3),
      pos=3
     ) 
-legend("topright", 
-       c("Linear","Linear LOOCV","Logistic","Logistic LOOCV"), 
-       fill=c("blue","red","green","yellow"), 
+legend("bottomright", 
+       c("Linear","Linear LOOCV","Logistic","Logistic LOOCV","Cubic","Cubic LOOCV"), 
+       fill=vir, 
        cex=0.8
     )
 
@@ -255,34 +276,34 @@ legend("topright",
 #################  PREDICT FOR 2019  ##################
 #######################################################
 # LOAD 2019 STATS
-dat_2019<-loadCurrent(normalize = TRUE)
-#dat_2019<-dat_totals[which(dat_totals$Season==2011),]
-
-# predict shortlist
-shortlist.pred<-predict(mod.shortlist,dat_2019)
-shortlist_2019<-dat_2019[order(-shortlist.pred),]
-shortlist_2019<-shortlist_2019[1:10,]
-
-
-# predict winner - no shortlist
-pred<-predict(mod.shortlist,dat_2019,type="response")
-dat_2019_pred<-dat_2019
-dat_2019_pred$Pred<-pred
-dat_2019_pred<-dat_2019_pred[order(-dat_2019_pred$Pred),] 
-
-# predict winner - with shortlist
-pred<-predict(mod.shortlist,shortlist_2019,type="response")
-shortlist_2019_pred<-shortlist_2019
-shortlist_2019_pred$Pred<-pred
-shortlist_2019_pred<-shortlist_2019_pred[order(-shortlist_2019_pred$Pred),] 
-
-# turn shortlist predictions into percentages
-shortlist_2019_pred$Pct<-shortlist_2019_pred$Pred-min(shortlist_2019_pred$Pred)
-shortlist_2019_pred$Pct<-(shortlist_2019_pred$Pct/sum(shortlist_2019_pred$Pct))*100
-
-## write predictions to csv
-pred_dat<-data.frame(Player=shortlist_2019_pred$Player,Pct=shortlist_2019_pred$Pct)
-write.csv(pred_dat, file = "./repositories/nba-models/html/2019Pred.csv",row.names=FALSE)
+# dat_2019<-loadCurrent(normalize = TRUE)
+# #dat_2019<-dat_totals[which(dat_totals$Season==2011),]
+# 
+# # predict shortlist
+# shortlist.pred<-predict(mod.shortlist,dat_2019)
+# shortlist_2019<-dat_2019[order(-shortlist.pred),]
+# shortlist_2019<-shortlist_2019[1:10,]
+# 
+# 
+# # predict winner - no shortlist
+# pred<-predict(mod.shortlist,dat_2019,type="response")
+# dat_2019_pred<-dat_2019
+# dat_2019_pred$Pred<-pred
+# dat_2019_pred<-dat_2019_pred[order(-dat_2019_pred$Pred),] 
+# 
+# # predict winner - with shortlist
+# pred<-predict(mod.shortlist,shortlist_2019,type="response")
+# shortlist_2019_pred<-shortlist_2019
+# shortlist_2019_pred$Pred<-pred
+# shortlist_2019_pred<-shortlist_2019_pred[order(-shortlist_2019_pred$Pred),] 
+# 
+# # turn shortlist predictions into percentages
+# shortlist_2019_pred$Pct<-shortlist_2019_pred$Pred-min(shortlist_2019_pred$Pred)
+# shortlist_2019_pred$Pct<-(shortlist_2019_pred$Pct/sum(shortlist_2019_pred$Pct))*100
+# 
+# ## write predictions to csv
+# pred_dat<-data.frame(Player=shortlist_2019_pred$Player,Pct=shortlist_2019_pred$Pct)
+# write.csv(pred_dat, file = "./repositories/nba-models/html/2019Pred.csv",row.names=FALSE)
 
 
 # mod refining ideas
@@ -345,6 +366,30 @@ accuracyCV <- function(param.dat,param.mod){
     cv.mvp<-test[which(cv.pred == max(cv.pred)),]
     mvps <- data.frame(rbind(as.matrix(mvps), as.matrix(cv.mvp)))
     # test on leaveout
+  }
+  return(calcAccuracy(mvps,FALSE))
+}
+
+aggregateCV <- function(param.dat,mod1,mod2){
+  mvps<-param.dat[0,]
+  for (year in min(param.dat$Season):max(param.dat$Season)) {
+    # leave out one year
+    test <- param.dat[which(param.dat$Season == year),]
+    train <- param.dat[which(param.dat$Season != year),]
+    # train model on remaining
+    if (mod1$call[1]=="glm()"){
+      print("logistic")
+    }
+    ## fit linear 1
+    cv1 <- lm(mod1$call[2],data=train)
+    ## fit linear 2
+    cv2 <- lm(mod2$call[2],data=train)
+    ## predict for each model
+    cv1.pred<-predict(cv1,newdata=test,type="response")
+    cv2.pred<-predict(cv2,newdata=test,type="response")
+    cv.pred <- (cv1.pred + cv2.pred) / 2
+    cv.mvp<-test[which(cv.pred == max(cv.pred)),]
+    mvps <- data.frame(rbind(as.matrix(mvps), as.matrix(cv.mvp)))
   }
   return(calcAccuracy(mvps,FALSE))
 }
