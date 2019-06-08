@@ -1,6 +1,36 @@
 # constants
 YEAR_START<-2000
-YEAR_END<-2017
+YEAR_END<-2018
+NORM<-TRUE
+
+#######################################################
+############### PROCESS BBALLREF DATA #################
+#######################################################
+
+#source("./repositories/nba-models/loadData.R")
+
+# LOAD STANDINGS DATA
+dat_std<-loadStandings(1990,2019)
+
+# LOAD MVP DATA
+dat_mvp<-loadMVP(2000,2018,dat_std)
+
+# LOAD TOTAL PLAYER STATS
+dat_totals<-loadTotals(YEAR_START,YEAR_END,dat_mvp,normalize=NORM)
+
+# LOAD PERGAME PLAYER STATS
+dat_pergame<-loadPerGame(YEAR_START,YEAR_END,dat_mvp,normalize=NORM)
+
+# LOAD ADVANCED PLAYER STATS
+dat_adv<-loadAdvanced(YEAR_START,YEAR_END,dat_mvp,normalize=NORM)
+
+# WRITE TO CSVs
+write.csv(dat_std,file = "./repositories/nba-models/full-data/standings.csv",row.names=FALSE)
+write.csv(dat_mvp,file = "./repositories/nba-models/full-data/mvp.csv",row.names=FALSE)
+write.csv(dat_totals,file = "./repositories/nba-models/full-data/totals.csv",row.names=FALSE)
+write.csv(dat_pergame,file = "./repositories/nba-models/full-data/pergame.csv",row.names=FALSE)
+write.csv(dat_adv,file = "./repositories/nba-models/full-data/advanced.csv",row.names=FALSE)
+
 
 #######################################################
 #################### MVP DATA ######################### 
@@ -231,13 +261,14 @@ loadTotals <- function(yr_start,yr_end,dat_mvp,normalize) {
   dat_totals<-dat_totals[which(dat_totals$Tm!="TOT"),]
   dat_totals<-dat_totals[complete.cases(dat_totals), ]
   # remove observations without minimum games
-  dat_adv <- dat_adv[which(dat_adv$G > 41),]
+  dat_totals <- dat_totals[which(dat_totals$G > 41),]
   
   # normalize data
   if (normalize==TRUE){
     for (year in levels(as.factor(dat_totals$Season))) {
       for (idx in c(4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30)) {
-        dat_totals[,idx]<-dat_totals[,idx]/max(dat_totals[,idx])
+        dat_year <- dat_totals[which(dat_totals$Season==year),]
+        dat_totals[which(dat_totals$Season==year),][,idx]<-dat_year[,idx]/max(dat_year[,idx])
         dat_totals[,idx]<-round(dat_totals[,idx], digits = 3)
       }
     }
@@ -350,7 +381,9 @@ loadAdvanced <- function(yr_start,yr_end,dat_mvp,normalize) {
   if (normalize==TRUE){
     for (year in levels(as.factor(dat_adv$Season))) {
       for (idx in c(4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27)) {
-        dat_adv[,idx]<-dat_adv[,idx]/max(dat_adv[,idx],na.rm=T)
+        dat_year <- dat_adv[which(dat_adv$Season==year),]
+        dat_adv[which(dat_adv$Season==year),][,idx]<-dat_year[,idx]/max(dat_year[,idx],na.rm=T)
+        dat_adv[,idx]<-round(dat_adv[,idx], digits = 3)
       }
     }
   }
@@ -454,13 +487,15 @@ loadPerGame <- function(yr_start,yr_end,dat_mvp,normalize) {
   dat_pg<-dat_pg[which(dat_pg$Tm!="TOT"),]
   dat_pg<-dat_pg[complete.cases(dat_pg), ]
   # remove observations without minimum games
-  dat_adv <- dat_adv[which(dat_adv$G > 41),]
+  dat_pg <- dat_pg[which(dat_pg$G > 41),]
   
   # normalize data
   if (normalize==TRUE){
     for (year in levels(as.factor(dat_pg$Season))) {
       for (idx in c(4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30)) {
-        dat_pg[,idx]<-dat_pg[,idx]/max(dat_pg[,idx])
+        dat_year <- dat_pg[which(dat_pg$Season==year),]
+        dat_pg[which(dat_pg$Season==year),][,idx]<-dat_year[,idx]/max(dat_year[,idx])
+        dat_pg[,idx]<-round(dat_pg[,idx], digits = 3)
       }
     }
   }
