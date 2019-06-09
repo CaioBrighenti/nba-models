@@ -1,6 +1,6 @@
 ## HYPERPARAMETERS
-SHORT_CUTOFF <- 0.9
-NORM <- TRUE
+SHORT_CUTOFF <- 0.75
+NORM <- FALSE
 
 #######################################################
 ################## LOAD MERGED CSVs ###################
@@ -259,7 +259,7 @@ xx=barplot(c(accs$Linear,accs$LOOCV.lm,accs$Logistic,accs$LOOCV.log,accs$Cubic,a
            las=2,
            col=c(rep(vir[1],4),rep(vir[2],4),rep(vir[3],4),rep(vir[4],4),rep(vir[5],4),rep(vir[6],4)),
            ylab="Accuracy", 
-           main="Model Accuracies - 2000-2018"
+           main="Model Accuracies - 1980-2018"
           )
 if(NORM){
   str<-"Normalized -"

@@ -12,7 +12,7 @@ scrapeBbalRef(2018, 2018, 'https://www.basketball-reference.com/leagues/NBA_*SEA
 # grab season player stat totals
 scrapeBbalRef(2018, 2018, 'https://www.basketball-reference.com/leagues/NBA_*SEASON*_totals.html','totals_stats','season-stats-totals')
 # grab season advanced player stats
-scrapeBbalRef(2019, 2019, 'https://www.basketball-reference.com/leagues/NBA_*SEASON*_advanced.html','advanced_stats','season-stats-advanced')
+scrapeBbalRef(1997, 1997, 'https://www.basketball-reference.com/leagues/NBA_*SEASON*_advanced.html','advanced_stats','season-stats-advanced')
 # grab MVP stats
 scrapeBbalRef(2018, 2018, 'https://www.basketball-reference.com/awards/awards_*SEASON*.html','nba_mvp','award-stats', False)
 # grab standings stats

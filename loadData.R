@@ -1,7 +1,7 @@
 # constants
-YEAR_START<-2000
+YEAR_START<-1980
 YEAR_END<-2018
-NORM<-TRUE
+NORM<-FALSE
 
 #######################################################
 ############### PROCESS BBALLREF DATA #################
@@ -10,10 +10,10 @@ NORM<-TRUE
 #source("./repositories/nba-models/loadData.R")
 
 # LOAD STANDINGS DATA
-dat_std<-loadStandings(1990,2019)
+dat_std<-loadStandings(1980,2019)
 
 # LOAD MVP DATA
-dat_mvp<-loadMVP(2000,2018,dat_std)
+dat_mvp<-loadMVP(1980,2018,dat_std)
 
 # LOAD TOTAL PLAYER STATS
 dat_totals<-loadTotals(YEAR_START,YEAR_END,dat_mvp,normalize=NORM)
