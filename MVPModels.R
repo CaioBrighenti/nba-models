@@ -1,25 +1,55 @@
 ## HYPERPARAMETERS
 SHORT_CUTOFF <- 0.75
+YEAR_START<-2000
+YEAR_END<-2018
 NORM <- FALSE
+
+#######################################################
+############### PROCESS BBALLREF DATA #################
+#######################################################
+
+#source("loadData.R")
+
+#LOAD STANDINGS DATA
+dat_std<-loadStandings(YEAR_START,2019)
+
+# LOAD MVP DATA
+dat_mvp<-loadMVP(YEAR_START,YEAR_END,dat_std)
+
+# LOAD TOTAL PLAYER STATS
+dat_totals<-loadTotals(YEAR_START,YEAR_END,dat_mvp,normalize=NORM)
+
+# LOAD PERGAME PLAYER STATS
+dat_pergame<-loadPerGame(YEAR_START,YEAR_END,dat_mvp,normalize=NORM)
+
+# LOAD ADVANCED PLAYER STATS
+dat_adv<-loadAdvanced(YEAR_START,YEAR_END,dat_mvp,normalize=NORM)
+
+# WRITE TO CSVs
+write.csv(dat_std,file = "full-data/standings.csv",row.names=FALSE)
+write.csv(dat_mvp,file = "full-data/mvp.csv",row.names=FALSE)
+write.csv(dat_totals,file = "full-data/totals.csv",row.names=FALSE)
+write.csv(dat_pergame,file = "full-data/pergame.csv",row.names=FALSE)
+write.csv(dat_adv,file = "full-data/advanced.csv",row.names=FALSE)
 
 #######################################################
 ################## LOAD MERGED CSVs ###################
 #######################################################
 
 # LOAD STANDINGS DATA
-dat_std<-read.csv("./repositories/nba-models/full-data/standings.csv",header=TRUE)
+dat_std<-read.csv("full-data/standings.csv",header=TRUE)
 
 # LOAD MVP DATA
-dat_mvp<-read.csv("./repositories/nba-models/full-data/mvp.csv",header=TRUE)
+dat_mvp<-read.csv("full-data/mvp.csv",header=TRUE)
 
 # LOAD TOTAL PLAYER STATS
-dat_totals<-read.csv("./repositories/nba-models/full-data/totals.csv",header=TRUE)
+dat_totals<-read.csv("full-data/totals.csv",header=TRUE)
 
 # LOAD PERGAME PLAYER STATS
-dat_pergame<-read.csv("./repositories/nba-models/full-data/pergame.csv",header=TRUE)
+dat_pergame<-read.csv("full-data/pergame.csv",header=TRUE)
 
 # LOAD PERGAME PLAYER STATS
-dat_adv<-read.csv("./repositories/nba-models/full-data/advanced.csv",header=TRUE)
+dat_adv<-read.csv("full-data/advanced.csv",header=TRUE)
 
 ## total prelim stats
 # library("dplyr")
@@ -235,7 +265,7 @@ mlm.cv.acc<-accuracyCV(merge.shortlist,merge.lm)
 mlog.cv.acc<-accuracyCV(merge.shortlist,merge.log)
 mpoly.cv.acc<-accuracyCV(merge.shortlist,merge.poly)
 ## aggregate model
-agglm.cv.acc<-aggregateCV(merge.shortlist,merge.lm,merge.log)
+agglm.cv.acc<-aggregateCV(merge.shortlist,tot.lm,pg.lm)
 agglog.cv.acc<-aggregateCV(merge.shortlist,tot.log,pg.log)
 aggpoly.cv.acc<-aggregateCV(merge.shortlist,tot.poly,pg.poly)
 
@@ -259,7 +289,7 @@ xx=barplot(c(accs$Linear,accs$LOOCV.lm,accs$Logistic,accs$LOOCV.log,accs$Cubic,a
            las=2,
            col=c(rep(vir[1],4),rep(vir[2],4),rep(vir[3],4),rep(vir[4],4),rep(vir[5],4),rep(vir[6],4)),
            ylab="Accuracy", 
-           main="Model Accuracies - 1980-2018"
+           main=paste("Model Accuracies -",YEAR_START,"-",YEAR_END)
           )
 if(NORM){
   str<-"Normalized -"
@@ -282,8 +312,8 @@ legend("bottomright",
 #################  PREDICT FOR 2019  ##################
 #######################################################
 # LOAD 2019 STATS
-dat_2019_tot<-loadCurrent(normalize = FALSE)
-dat_2019_adv<-loadCurrentAdv(normalize = TRUE)
+dat_2019_tot<-loadCurrent(normalize = NORM)
+dat_2019_adv<-loadCurrentAdv(normalize = NORM)
 
 # predict shortlist
 shortlist.pred<-predict(tot.short.mod,dat_2019_tot)
@@ -301,7 +331,7 @@ shortlist_2019$Pct<-(shortlist_2019$Pct/sum(shortlist_2019$Pct))*100
 
 ## write predictions to csv
 pred_dat<-data.frame(Player=shortlist_2019$Player,Pct=shortlist_2019$Pct)
-write.csv(pred_dat, file = "./repositories/nba-models/html/2019Pred.csv",row.names=FALSE)
+write.csv(pred_dat, file = "html/2019Pred.csv",row.names=FALSE)
 
 
 # mod refining ideas
@@ -312,6 +342,11 @@ write.csv(pred_dat, file = "./repositories/nba-models/html/2019Pred.csv",row.nam
 ## add advanced stats
 ## minimum advanced stats (PER)
 ## post all-star game numbers
+
+#######################################################
+################## INVERSE RECENCY ####################
+#######################################################
+
 
 #######################################################
 ################# HELPER FUNCTIONS #################### 

@@ -1,19 +1,19 @@
 # constants
 YEAR_START<-1980
 YEAR_END<-2018
-NORM<-FALSE
+NORM<-TRUE
 
 #######################################################
 ############### PROCESS BBALLREF DATA #################
 #######################################################
 
-#source("./repositories/nba-models/loadData.R")
+#source("loadData.R")
 
 # LOAD STANDINGS DATA
-dat_std<-loadStandings(1980,2019)
+dat_std<-loadStandings(YEAR_START,YEAR_END)
 
 # LOAD MVP DATA
-dat_mvp<-loadMVP(1980,2018,dat_std)
+dat_mvp<-loadMVP(YEAR_START,YEAR_END,dat_std)
 
 # LOAD TOTAL PLAYER STATS
 dat_totals<-loadTotals(YEAR_START,YEAR_END,dat_mvp,normalize=NORM)
@@ -25,11 +25,11 @@ dat_pergame<-loadPerGame(YEAR_START,YEAR_END,dat_mvp,normalize=NORM)
 dat_adv<-loadAdvanced(YEAR_START,YEAR_END,dat_mvp,normalize=NORM)
 
 # WRITE TO CSVs
-write.csv(dat_std,file = "./repositories/nba-models/full-data/standings.csv",row.names=FALSE)
-write.csv(dat_mvp,file = "./repositories/nba-models/full-data/mvp.csv",row.names=FALSE)
-write.csv(dat_totals,file = "./repositories/nba-models/full-data/totals.csv",row.names=FALSE)
-write.csv(dat_pergame,file = "./repositories/nba-models/full-data/pergame.csv",row.names=FALSE)
-write.csv(dat_adv,file = "./repositories/nba-models/full-data/advanced.csv",row.names=FALSE)
+write.csv(dat_std,file = "full-data/standings.csv",row.names=FALSE)
+write.csv(dat_mvp,file = "full-data/mvp.csv",row.names=FALSE)
+write.csv(dat_totals,file = "full-data/totals.csv",row.names=FALSE)
+write.csv(dat_pergame,file = "full-data/pergame.csv",row.names=FALSE)
+write.csv(dat_adv,file = "full-data/advanced.csv",row.names=FALSE)
 
 
 #######################################################
@@ -42,7 +42,7 @@ loadMVP <- function(yr_start,yr_end,dat_std) {
                       STL=double(),BLK=double(),FG.=double(),X3P.=double(),FT.=double(),
                       WS=double(),WS.48=double(),Season=double())
   for (year in yr_start:yr_end) {
-    str<-paste("./repositories/nba-models/award-stats/",year,".csv",sep="")
+    str<-paste("award-stats/",year,".csv",sep="")
     dat_temp<-read.csv(str, header = TRUE,stringsAsFactors=FALSE)
     dat_temp$Season<-year
     # normalize stats
@@ -133,7 +133,7 @@ loadStandings <- function(yr_start,yr_end) {
                       Apr=character(),May=character(),Season=factor())
   for (year in yr_start:yr_end) {
     # read data
-    str<-paste("./Repositories/nba-models/season-standings/",year,".csv",sep="")
+    str<-paste("season-standings/",year,".csv",sep="")
     dat_temp<-read.csv(str, header = TRUE)
     
     # add season column
@@ -210,7 +210,7 @@ loadTotals <- function(yr_start,yr_end,dat_mvp,normalize) {
                       PF=double(),PTS=double(),Season=integer())
   for (year in yr_start:yr_end) {
     # read data
-    str<-paste("./Repositories/nba-models/season-stats-totals/",year,".csv",sep="")
+    str<-paste("season-stats-totals/",year,".csv",sep="")
     dat_temp<-read.csv(str, header = TRUE)
     
     # add season column
@@ -320,7 +320,7 @@ loadAdvanced <- function(yr_start,yr_end,dat_mvp,normalize) {
                         BPM=double(),VORP=double(),Season=integer())
   for (year in yr_start:yr_end) {
     # read data
-    str<-paste("./Repositories/nba-models/season-stats-advanced/",year,".csv",sep="")
+    str<-paste("season-stats-advanced/",year,".csv",sep="")
     dat_temp<-read.csv(str, header = TRUE)
     
     # add season column
@@ -436,7 +436,7 @@ loadPerGame <- function(yr_start,yr_end,dat_mvp,normalize) {
                      PF=double(),PTS=double(),Season=integer())
   for (year in yr_start:yr_end) {
     # read data
-    str<-paste("./Repositories/nba-models/season-stats-pergame/",year,".csv",sep="")
+    str<-paste("season-stats-pergame/",year,".csv",sep="")
     dat_temp<-read.csv(str, header = TRUE)
     
     # add season column
@@ -538,7 +538,7 @@ loadPerGame <- function(yr_start,yr_end,dat_mvp,normalize) {
 #######################################################
 loadCurrent <- function(normalize) {
   # read data
-  str<-paste("./Repositories/nba-models/season-stats-totals/",2019,".csv",sep="")
+  str<-paste("season-stats-totals/",2019,".csv",sep="")
   dat_2019<-read.csv(str, header = TRUE)
   
   # add season column
@@ -618,7 +618,7 @@ loadCurrent <- function(normalize) {
 #######################################################
 loadCurrentAdv <- function(normalize) {
   # read data
-  str<-paste("./Repositories/nba-models/season-stats-advanced/",2019,".csv",sep="")
+  str<-paste("season-stats-advanced/",2019,".csv",sep="")
   dat_2019<-read.csv(str, header = TRUE)
   
   # add season column
