@@ -4,27 +4,32 @@ The goal of this project is to create a series of statistical models regarding N
 
 This project also aims to eventually combine game statistics with social media data. There is no doubt all star voting and awards selection is heavily influenced by social media trends and media narratives, and I suspect accounting for this would improve the model. The first step for this will be including Twitter data, pending a developer account application.
 
+## Towards Data Science
+
+An article on this project has been published by [Towards Data Science](https://towardsdatascience.com/). This article can be found [here](https://towardsdatascience.com/using-data-science-to-predict-the-next-nba-mvp-30526e0443da).
+
 ## Getting Started
 
-At this stage, usage of the project is fairly self explanatory. Simply use scraper.py for the scraping functionality, or loadData.R and MVPModels.R. Prerequisites for each of these, and libraries used are listed below.
+At this stage, usage of the project is fairly self explanatory. Simply use scraper.py for the scraping functionality, or loadData.R and MVPModels.R. Prerequisites for each of these, and libraries used are listed below or within the respective files.
 
 ## Currently Implemented
 
-* Scraper for MVP data, season player total statistics, season player per game statistics, and team standings.
-* Models predicting MVP outcome using MVP data and total player statistics.
+* Scraper for MVP data, season player total statistics, season player per game statistics, season player advanced statistics, and team standings
+* Models predicting MVP outcome using MVP data and total and advanced player statistics
+* Leave-one-out cross validation system to quickly evaluate new models
 
 ## Planed Features
 
 **Scraper**
-* Add scraping for advanced statistics
+* ~~Add scraping for advanced statistics~~
 * Add scraping for other awards
 
 **MVP Models**
-* Model using per game statistics
+* ~~Model using per game statistics~~
 * Accounting for shortened seasons
 * Accounting for reverse recency bias
 * Adding feature to analyze player improvement relative to past season
-* Add advanced stats to models
+* ~~Add advanced stats to models~~
 * Account for post All-Star break numbers
 
 **Long-term**
